@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Categories extends Model
 {
@@ -13,7 +14,7 @@ class Categories extends Model
         'name',
     ];
     
-    public function events()
+    public function events() : BelongsToMany
     {
         return $this->belongsToMany(Events::class, 'event_category');
     }

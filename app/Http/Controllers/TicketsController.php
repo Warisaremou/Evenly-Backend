@@ -45,10 +45,86 @@ class TicketsController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function showTicketDetails($id)
     {
-        $ticket = Tickets::findOrFail($id);
-        return response()->json($ticket);
+        $ticket = Tickets::with(['type_ticket', 'event', 'user'])->find($id);
+
+        if ($ticket) {
+            return response()->json([
+                'ticket' => [
+                    'id' => $ticket->id,
+                    'name' => $ticket->name,
+                    'quantity' => $ticket->quantity,
+                    'price' => $ticket->price,
+                    'user_id' => $ticket->user_id,
+                    'event_id' => $ticket->event_id,
+                    'type_ticket_id' => $ticket->type_ticket_id,
+                    'created_at' => $ticket->created_at,
+                    'updated_at' => $ticket->updated_at,
+                    'deleted_at' => $ticket->deleted_at,
+                ],
+                'type_ticket' => [
+                    'id' => $ticket->type_ticket->id,
+                    'name' => $ticket->type_ticket->name,
+                    'created_at' => $ticket->type_ticket->created_at,
+                    'updated_at' => $ticket->type_ticket->updated_at,
+                ],
+                'event' => [
+                    'id' => $ticket->event->id,
+                    'title' => $ticket->event->title,
+                    'date_time' => $ticket->event->date_time,
+                    'location' => $ticket->event->location,
+                    'description' => $ticket->event->description,
+                    'picture' => $ticket->event->picture,
+                    'created_at' => $ticket->event->created_at,
+                    'updated_at' => $ticket->event->updated_at,
+                ],
+                'user' => [
+                    'id' => $ticket->user->id,
+                    'name' => $ticket->user->name,
+                    'email' => $ticket->user->email,
+                    'email_verified_at' => $ticket->user->email_verified_at,
+                    'created_at' => $ticket->user->created_at,
+                    'updated_at' => $ticket->user->updated_at,
+                ],
+            ]);
+        }else{
+            return response()->json([
+                'message' => 'Ticket not found'
+            ], 404);
+        }
+    }
+
+    public function getOders($id)
+    {
+        $ticket = Tickets::with('orders')->find($id);
+
+        if ($ticket) {
+            return response()->json([
+                'ticket' => [
+                    'id' => $ticket->id,
+                    'name' => $ticket->name,
+                    'quantity' => $ticket->quantity,
+                    'price' => $ticket->price,
+                    'user_id' => $ticket->user_id,
+                    'created_at' => $ticket->created_at,
+                    'updated_at' => $ticket->updated_at,
+                    'deleted_at' => $ticket->deleted_at,
+                ],
+                'orders' => $ticket->orders->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'name' => $order->name,
+                        'created_at' => $order->created_at,
+                        'updated_at' => $order->updated_at,
+                    ];
+                }),
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Ticket not found'
+            ], 404);
+        }
     }
 
     public function update(Request $request, $id)

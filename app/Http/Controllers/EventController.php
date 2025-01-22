@@ -50,17 +50,34 @@ class EventController extends Controller
 
     public function show($id)
     {
-        $event = Events::findOrFail($id);
-        return response()->json($event);
-    }
+        $event = Events::with('tickets')->find($id);
 
-    public function showCategories($id)
-    {
-        $event = Events::findOrFail($id);
-        
-        if($event){
-            $categories = $event->categories;
-            return response()->json($categories);
+        if ($event) {
+            return response()->json([
+                'event' => [
+                    'id' => $event->id,
+                    'picture' => $event->picture,
+                    'title' => $event->title,
+                    'date_time' => $event->date_time,
+                    'location' => $event->location,
+                    'description' => $event->description,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at,
+                ],
+                'tickets' => $event->tickets->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'name' => $ticket->name,
+                        'quantity' => $ticket->quantity,
+                        'price' => $ticket->price,
+                        'user_id' => $ticket->user_id,
+                        'type_ticket_id' => $ticket->type_ticket_id,
+                        'created_at' => $ticket->created_at,
+                        'updated_at' => $ticket->updated_at,
+                        'deleted_at' => $ticket->deleted_at,
+                    ];
+                }),
+            ]);
         } else {
             return response()->json([
                 'message' => 'Event not found'
@@ -118,4 +135,40 @@ class EventController extends Controller
         ], 200);
     }
 
+    public function attachCategory(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'categories' => 'required|array',
+            'categories.*' => 'exists:categories,id',
+        ]);
+
+        $event = Events::findOrFail($id);
+        $event->categories()->attach($validated['categories']);
+
+        return response()->json([
+            'message' => 'Category added to event successfully'
+        ], 201);
+    }
+
+    public function getCategories($id)
+    {
+        $event = Events::with('categories')->findOrFail($id);
+
+        if (!$event) {
+            return response()->json([
+                'message' => 'Event not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'categories' => $event->categories->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'created_at' => $category->created_at,
+                    'updated_at' => $category->updated_at,
+                ];
+            }),
+        ]);
+    }
 }

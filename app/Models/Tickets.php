@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tickets extends Model
 {
@@ -16,12 +17,12 @@ class Tickets extends Model
         'price',
         'user_id',
         'event_id',
-        'typeticket_id',   
+        'type_ticket_id',   
     ];
 
-    public function typeticket() : BelongsTo
+    public function type_ticket() : BelongsTo
     {
-        return $this->belongsTo(Typetickets::class);
+        return $this->belongsTo(Typetickets::class, 'type_ticket_id');
     }
 
     public function event() : BelongsTo
@@ -32,5 +33,10 @@ class Tickets extends Model
     public function user() : BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function orders() : HasMany
+    {
+        return $this->hasMany(Orders::class);
     }
 }

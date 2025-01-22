@@ -14,8 +14,10 @@ class TypeTickets extends Model
         'name',
     ];
 
+    protected $table = 'type_tickets';
+    
     public function tickets() : HasMany
     {
-        return $this->hasMany(Tickets::class);
+        return $this->hasMany(Tickets::class, 'type_ticket_id');
     }
 }

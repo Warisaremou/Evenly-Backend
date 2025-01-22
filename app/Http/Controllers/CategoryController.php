@@ -74,4 +74,53 @@ class CategoryController extends Controller
             'message' => 'Category deleted successfully'
         ]);
     }
+
+    public function attachEvent(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'events' => 'required|array',
+            'events.*' => 'exists:events,id',
+        ]);
+
+        $category = Categories::findOrFail($id);
+
+        if (!$category) {
+            return response()->json([
+                'message' => 'Category not found'
+            ], 404);
+        }
+
+        $category->events()->attach($validated['events']);
+
+        return response()->json([
+            'message' => 'Event attached to category successfully',
+            'category' => $category
+        ]);
+    }
+
+    public function getEvents($id)
+    {
+        $category = Categories::with('events')->findOrFail($id);
+
+        if (!$category) {
+            return response()->json([
+                'message' => 'Category not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'events' => $category->events->map(function ($event) {
+                return [
+                    'id' => $event->id,
+                    'picture' => $event->picture,
+                    'title' => $event->title,
+                    'date_time' => $event->date_time,
+                    'location' => $event->location,
+                    'description' => $event->description,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at,
+                ];
+            }),
+        ]);
+    }
 }

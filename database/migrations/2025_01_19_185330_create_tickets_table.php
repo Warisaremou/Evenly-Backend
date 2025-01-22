@@ -18,13 +18,13 @@ return new class extends Migration
             $table->decimal('price', 8, 2); 
             $table->uuid('event_id'); 
             $table->uuid('user_id'); 
-            $table->uuid('typeticket_id'); 
+            $table->uuid('type_ticket_id'); 
             $table->timestamps(); 
             $table->softDeletes();
 
             $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('typeticket_id')->references('id')->on('typetickets')->onDelete('cascade');
+            $table->foreign('type_ticket_id')->references('id')->on('type_tickets')->onDelete('cascade');
         });
     }
 
