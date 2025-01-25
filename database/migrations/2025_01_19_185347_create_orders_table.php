@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('ticket_id');
             $table->uuid('user_id');
             $table->boolean('is_canceled')->default(false);
             $table->boolean('is_expired')->default(false);
             $table->timestamps();
 
-            $table->foreign('ticket_id')->references('id')->on('tickets')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
@@ -29,6 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Schema::table('orders', function (Blueprint $table) {
+        //     $table->dropForeign(['user_id']);
+        // });
+        
         Schema::dropIfExists('orders');
     }
 };

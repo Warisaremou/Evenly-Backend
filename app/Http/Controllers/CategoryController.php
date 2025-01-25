@@ -7,13 +7,19 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function getCategories()
     {
         $categories = Categories::all();
-        return response()->json($categories);
+
+        if ($categories->isEmpty()) {
+            return response()->json([
+                'message' => 'Categories not found'
+            ], 404);
+        }
+        return response()->json($categories, 200);
     }
 
-    public function store(Request $request)
+    public function createCatergories(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -29,13 +35,20 @@ class CategoryController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function getCategoriesById($id)
     {
         $category = Categories::findOrFail($id);
-        return response()->json($category);
+
+        if (!$category) {
+            return response()->json([
+                'message' => 'Category not found'
+            ], 404);
+        }
+
+        return response()->json($category, 200);
     }
 
-    public function update(Request $request, $id)
+    public function updateCategories(Request $request, $id)
     {
 
         $validated = $request->validate([
@@ -43,6 +56,7 @@ class CategoryController extends Controller
         ]);
 
         $category = Categories::findOrFail($id);
+
         if (!$category) {
             return response()->json([
                 'message' => 'Category not found'
@@ -55,10 +69,10 @@ class CategoryController extends Controller
         return response()->json([
             'message' => 'Category updated successfully',
             'category' => $category
-        ]);
+        ], 200);
     }
 
-    public function destroy($id)
+    public function destroyCategories($id)
     {
         $category = Categories::findOrFail($id);
 
@@ -72,7 +86,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'message' => 'Category deleted successfully'
-        ]);
+        ], 200);
     }
 
     public function attachEvent(Request $request, $id)
@@ -94,8 +108,8 @@ class CategoryController extends Controller
 
         return response()->json([
             'message' => 'Event attached to category successfully',
-            'category' => $category
-        ]);
+            // 'category' => $category->load('events')
+        ], 200);
     }
 
     public function getEvents($id)
@@ -121,6 +135,6 @@ class CategoryController extends Controller
                     'updated_at' => $event->updated_at,
                 ];
             }),
-        ]);
+        ], 200);
     }
 }

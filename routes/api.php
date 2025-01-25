@@ -3,6 +3,7 @@
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\RolesController;
 use App\Http\Controllers\TicketsController;
 use App\Http\Controllers\TypeTicketsController;
 use App\Http\Controllers\UserController;
@@ -19,65 +20,78 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "²" middleware group. Make something great!
 |
 */
+// Route::get('/', function () {
+//     return response()->json(['message' => 'Bienvenue dans l\'API'], 200);
+// });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
 Route::prefix('/api')->group(function (){
+    Route::prefix('roles')->group(function () {
+        Route::get('/', [RolesController::class, 'getRoles']);
+        // Route::post('/', [RolesController::class, 'createRoles']);
+        Route::get('/{id}', [RolesController::class, 'getRolesById']);
+        Route::patch('/{id}', [RolesController::class, 'updateRoles']);
+        Route::delete('/{id}', [RolesController::class, 'destroyRoles']);
+    });
+
     Route::prefix('users')->group(function () {
-        Route::get('/', [UserController::class, 'index']);
-        Route::post('/', [UserController::class, 'store']);
-        Route::get('/{id}', [UserController::class, 'show']);
-        Route::get('/{id}/orders', [UserController::class, 'getUserOrders']);
-        Route::put('/{id}', [UserController::class, 'update']);
-        Route::delete('/{id}', [UserController::class, 'destroy']);
+        Route::get('/', [UserController::class, 'getUsers']);
+        Route::post('/', [UserController::class, 'createUsers']);
+        Route::get('/{id}', [UserController::class, 'getUsersById']);
+        Route::get('/{id}/events', [UserController::class, 'getEventsByUser']);
+        Route::get('/{id}/tickets', [UserController::class, 'getTicketsByUser']);
+        // Route::put('/{id}', [UserController::class, 'updateUsers']);
+        Route::delete('/{id}', [UserController::class, 'destroyUsers']);
     });
 
     Route::prefix('events')->group(function () {
-        Route::get('/', [EventController::class, 'index']);
-        Route::post('/', [EventController::class, 'store']);
-        Route::get('/{id}', [EventController::class, 'show']);
-        Route::put('/{id}', [EventController::class, 'update']);
-        Route::delete('/{id}', [EventController::class, 'destroy']);
-        Route::post('/{id}/attachCategory/{category_id}', [EventController::class, 'attachCategory']);
+        Route::get('/', [EventController::class, 'getEvents']);
+        Route::post('/', [EventController::class, 'createEvents']);
+        Route::get('/{id}', [EventController::class, 'getEventsById']);
+        Route::patch('/{id}', [EventController::class, 'updateEvents']);
+        Route::delete('/{id}', [EventController::class, 'destroyEvents']);
+        Route::post('/{id}/categories', [EventController::class, 'attachCategory']);
         Route::get('/{id}/categories', [EventController::class, 'getCategories']);
     });
 
     Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoryController::class, 'index']);
-        Route::post('/', [CategoryController::class, 'store']);
-        Route::get('/{id}', [CategoryController::class, 'show']);
-        Route::put('/{id}', [CategoryController::class, 'update']);
-        Route::delete('/{id}', [CategoryController::class, 'destroy']);
-        Route::post('/{id}/attachEvent/{event_id}', [CategoryController::class, 'attachEvent']);
+        Route::get('/', [CategoryController::class, 'getCategories']);
+        Route::post('/', [CategoryController::class, 'createCatergories']);
+        Route::get('/{id}', [CategoryController::class, 'getCategoriesById']);
+        Route::patch('/{id}', [CategoryController::class, 'updateCategories']);
+        Route::delete('/{id}', [CategoryController::class, 'destroyCategories']);
+        Route::post('/{id}/events', [CategoryController::class, 'attachEvent']);
         Route::get('/{id}/events', [CategoryController::class, 'getEvents']);
     });
 
-    Route::prefix('typetickets')->group(function () {
-        Route::get('/', [TypeTicketsController::class, 'index']);
-        Route::post('/', [TypeTicketsController::class, 'store']);
-        Route::get('/{id}', [TypeTicketsController::class, 'show']);
-        Route::get('/{id}/tickets', [TypeTicketsController::class, 'showTypeTicketDetails']);
-        Route::put('/{id}', [TypeTicketsController::class, 'update']);
-        Route::delete('/{id}', [TypeTicketsController::class, 'destroy']);
+    Route::prefix('type-tickets')->group(function () {
+        Route::get('/', [TypeTicketsController::class, 'getTypeTickets']);
+        Route::post('/', [TypeTicketsController::class, 'createTypeTickets']);
+        Route::get('/{id}', [TypeTicketsController::class, 'getTypeTicketsById']);
+        // Route::get('/{id}/tickets', [TypeTicketsController::class, 'showTypeTicketDetails']);
+        Route::patch('/{id}', [TypeTicketsController::class, 'updateTypeTickets']);
+        Route::delete('/{id}', [TypeTicketsController::class, 'destroyTypeTickets']);
     });
 
     Route::prefix('tickets')->group(function () {
-        Route::get('/', [TicketsController::class, 'index']);
-        Route::post('/', [TicketsController::class, 'store']);
-        Route::get('/{id}', [TicketsController::class, 'showTicketDetails']);
-        Route::get('/{id}/orders', [TicketsController::class, 'getOrders']);
-        Route::put('/{id}', [TicketsController::class, 'update']);
-        Route::delete('/{id}', [TicketsController::class, 'destroy']);
+        Route::get('/', [TicketsController::class, 'getTickets']);
+        Route::post('/', [TicketsController::class, 'createTickets']);
+        Route::get('/{id}', [TicketsController::class, 'getTicketsById']);
+        // Route::get('/{id}/orders', [TicketsController::class, 'getOrders']);
+        Route::patch('/{id}', [TicketsController::class, 'updateTickets']);
+        Route::delete('/{id}', [TicketsController::class, 'destroyTickets']);
     });
 
     Route::prefix('orders')->group(function () {
-        Route::get('/', [OrdersController::class, 'index']);
-        Route::post('/', [OrdersController::class, 'store']);
-        Route::get('/{id}', [OrdersController::class, 'show']);
-        Route::put('/{id}', [OrdersController::class, 'update']);
-        Route::delete('/{id}', [OrdersController::class, 'destroy']);
+        Route::get('/', [OrdersController::class, 'getOrders']);
+        Route::post('/', [OrdersController::class, 'createOrders']);
+        Route::get('/{id}', [OrdersController::class, 'getOrdersById']);
+        Route::patch('/{id}', [OrdersController::class, 'updateOrders']);
+        Route::delete('/{id}', [OrdersController::class, 'destroyOrders']);
     });
 });
 

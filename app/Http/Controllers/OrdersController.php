@@ -7,26 +7,31 @@ use Illuminate\Http\Request;
 
 class OrdersController extends Controller
 {
-    public function index()
+    public function getOrders()
     {
         $orders = Orders::all();
-        return response()->json($orders);
 
-        if (!$orders) {
+        if ($orders->isEmpty()) {
             return response()->json([
                 'message' => 'Orders not found'
             ], 404);
         }
+
+        return response()->json($orders, 200);
     }
 
-    public function store(Request $request)
+    public function createOrders(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'user_id' => 'required|uuid|exists:users,id',
+            'is_canceled' => 'required|boolean',
+            'is_expired' => 'required|boolean',
         ]);
 
         $order = Orders::create([
-            'name' => $validated['name'],
+            'user_id' => $validated['user_id'],
+            'is_canceled' => $validated['is_canceled'],
+            'is_expired' => $validated['is_expired'],
         ]);
 
         return response()->json([
@@ -35,73 +40,50 @@ class OrdersController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function getOrdersById($id)
     {
-        $order = Orders::with(['tickets', 'user'])->find($id);
-
-        if ($order) {
-            return response()->json([
-                'order' => [
-                    'id' => $order->id,
-                    'name' => $order->name,
-                    'created_at' => $order->created_at,
-                    'updated_at' => $order->updated_at,
-                ],
-                'tickets' => $order->tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'quantity' => $ticket->quantity,
-                        'price' => $ticket->price,
-                        'created_at' => $ticket->created_at,
-                        'updated_at' => $ticket->updated_at,
-                        'deleted_at' => $ticket->deleted_at,
-                    ];
-                }),
-                'user' => [
-                    'id' => $order->user->id,
-                    'firstname' => $order->user->firstname,
-                    'lastname' => $order->user->lastname,
-                    'email' => $order->user->email,
-                    'role' => $order->user->role,
-                    'organizer_name' => $order->user->organizer_name,
-                    'created_at' => $order->user->created_at,
-                    'updated_at' => $order->user->updated_at,
-                ],
-            ]);
-        }else{
-            return response()->json([
-                'message' => 'Order not found'
-            ], 404);
-        }
-    }
-
-    public function update(Request $request, $id)
-    {
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
         $order = Orders::findOrFail($id);
+
         if (!$order) {
             return response()->json([
                 'message' => 'Order not found'
             ], 404);
         }
-        
-        $order->name = $validated['name'];
+
+        return response()->json($order, 200);
+    }
+
+    public function updateOrders(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|uuid|exists:users,id',
+            'is_canceled' => 'required|boolean',
+            'is_expired' => 'required|boolean',
+        ]);
+
+        $order = Orders::findOrFail($id);
+
+        if (!$order) {
+            return response()->json([
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        $order->user_id = $validated['user_id'];
+        $order->is_canceled = $validated['is_canceled'];
+        $order->is_expired = $validated['is_expired'];
         $order->save();
 
         return response()->json([
             'message' => 'Order updated successfully',
             'order' => $order
-        ]);
+        ], 200);
     }
 
-    public function destroy($id)
+    public function destroyOrders($id)
     {
         $order = Orders::findOrFail($id);
+
         if (!$order) {
             return response()->json([
                 'message' => 'Order not found'
@@ -112,6 +94,6 @@ class OrdersController extends Controller
 
         return response()->json([
             'message' => 'Order deleted successfully'
-        ]);
+        ], 200);
     }
 }

@@ -16,14 +16,14 @@ return new class extends Migration
             $table->string('name');
             $table->integer('quantity'); 
             $table->decimal('price', 8, 2); 
+            $table->uuid('user_id');
             $table->uuid('event_id'); 
-            $table->uuid('user_id'); 
             $table->uuid('type_ticket_id'); 
             $table->timestamps(); 
             $table->softDeletes();
 
-            $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
             $table->foreign('type_ticket_id')->references('id')->on('type_tickets')->onDelete('cascade');
         });
     }

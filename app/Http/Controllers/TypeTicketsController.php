@@ -7,19 +7,20 @@ use Illuminate\Http\Request;
 
 class TypeTicketsController extends Controller
 {
-    public function index()
+    public function getTypeTickets()
     {
-        $type_ticket = TypeTickets::all();
-        return response()->json($type_ticket);
+        $type_tickets = TypeTickets::all();
 
-        if (!$type_ticket) {
+        if ($type_tickets->isEmpty()) {
             return response()->json([
                 'message' => 'TypeTickets not found'
             ], 404);
         }
+
+        return response()->json($type_tickets, 200);
     }
 
-    public function store(Request $request)
+    public function createTypeTickets(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -35,7 +36,7 @@ class TypeTicketsController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function getTypeTicketsById($id)
     { 
         $type_ticket = TypeTickets::findOrFail($id);
 
@@ -47,39 +48,40 @@ class TypeTicketsController extends Controller
 
         return response()->json([
             'type_ticket' => $type_ticket
-        ]);
+        ], 200);
     }
 
-    public function showTypeTicketDetails($id)
-    {
-        $type_ticket = TypeTickets::with(['ticket'])->find($id);
 
-        if ($type_ticket) {
-            return response()->json([
-                'type_ticket' => [
-                    'id' => $type_ticket->id,
-                    'name' => $type_ticket->name,
-                    'created_at' => $type_ticket->created_at,
-                    'updated_at' => $type_ticket->updated_at,
-                ],
-                'tickets' => $type_ticket->tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'quantity' => $ticket->quantity,
-                        'price' => $ticket->price,
-                        'created_at' => $ticket->created_at,
-                        'updated_at' => $ticket->updated_at,
-                        'deleted_at' => $ticket->deleted_at,
-                    ];
-                }),
-            ]);
-        }
+    // public function showTypeTicketDetails($id)
+    // {
+    //     $type_ticket = TypeTickets::with(['ticket'])->find($id);
 
-        return response()->json([
-            'message' => 'TypeTicket not found'
-        ], 404);
-    }
+    //     if ($type_ticket) {
+    //         return response()->json([
+    //             'type_ticket' => [
+    //                 'id' => $type_ticket->id,
+    //                 'name' => $type_ticket->name,
+    //                 'created_at' => $type_ticket->created_at,
+    //                 'updated_at' => $type_ticket->updated_at,
+    //             ],
+    //             'tickets' => $type_ticket->tickets->map(function ($ticket) {
+    //                 return [
+    //                     'id' => $ticket->id,
+    //                     'name' => $ticket->name,
+    //                     'quantity' => $ticket->quantity,
+    //                     'price' => $ticket->price,
+    //                     'created_at' => $ticket->created_at,
+    //                     'updated_at' => $ticket->updated_at,
+    //                     'deleted_at' => $ticket->deleted_at,
+    //                 ];
+    //             }),
+    //         ]);
+    //     }
+
+    //     return response()->json([
+    //         'message' => 'TypeTicket not found'
+    //     ], 404);
+    // }
 
     // public function showTypeTicketOrders($id)
     // {
@@ -109,7 +111,7 @@ class TypeTicketsController extends Controller
     //     ], 404);
     // }
 
-    public function update(Request $request, $id)
+    public function updateTypeTickets(Request $request, $id)
     {
 
         $validated = $request->validate([
@@ -128,11 +130,11 @@ class TypeTicketsController extends Controller
 
         return response()->json([
             'message' => 'TypeTicket updated successfully',
-            'typeticket' => $type_ticket
-        ]);
+            'type_ticket' => $type_ticket
+        ], 200);
     }
 
-    public function destroy($id)
+    public function destroyTypeTickets($id)
     {
         $type_ticket = TypeTickets::findOrFail($id);
 
@@ -146,6 +148,6 @@ class TypeTicketsController extends Controller
 
         return response()->json([
             'message' => 'TypeTicket deleted successfully'
-        ]);
+        ], 200);
     }
 }

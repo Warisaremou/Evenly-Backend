@@ -4,42 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Models\Events;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
-    public function index()
+    public function getEvents()
     {
         $events = Events::all();
-        return response()->json($events);
-
+        
         if($events->isEmpty()){
             return response()->json([
                 'message' => 'No events found'
             ], 404);
         }
+
+        return response()->json($events, 200);
     }
 
-    public function store(Request $request)
+    public function createEvents(Request $request)
     {
+        // Log::info('Requête reçue', $request->all());
+
         $validated = $request->validate([
-            'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',    
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',    
             'title' => 'required|string|max:255',
             'date_time' => 'required|date',
             'location' => 'required|string|max:255',
             'description' => 'required|string',
+            'user_id' => 'required|uuid|exists:users,id',
         ]);
         
-        $picturePath = null;
-        if ($request->hasFile('picture')) {
-            $validated['picture'] = $request->file('picture')->store('images');
+        $coverPath = null;
+        if ($request->hasFile('cover')) {
+            $validated['cover'] = $request->file('cover')->store('images');
         }
 
         $event = Events::create([
+            'cover' => $coverPath,
             'title' => $validated['title'],
             'date_time' => $validated['date_time'],
             'location' => $validated['location'],
             'description' => $validated['description'],
-            'picture' => $picturePath,  // Sauvegarder le chemin de l'image (ou null si aucune image)
+            'user_id' => $validated['user_id'], 
         ]);
 
         return response()->json([
@@ -48,52 +54,29 @@ class EventController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function getEventsById($id)
     {
-        $event = Events::with('tickets')->find($id);
+        $event = Events::findOrFail($id);
 
-        if ($event) {
-            return response()->json([
-                'event' => [
-                    'id' => $event->id,
-                    'picture' => $event->picture,
-                    'title' => $event->title,
-                    'date_time' => $event->date_time,
-                    'location' => $event->location,
-                    'description' => $event->description,
-                    'created_at' => $event->created_at,
-                    'updated_at' => $event->updated_at,
-                ],
-                'tickets' => $event->tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'quantity' => $ticket->quantity,
-                        'price' => $ticket->price,
-                        'user_id' => $ticket->user_id,
-                        'type_ticket_id' => $ticket->type_ticket_id,
-                        'created_at' => $ticket->created_at,
-                        'updated_at' => $ticket->updated_at,
-                        'deleted_at' => $ticket->deleted_at,
-                    ];
-                }),
-            ]);
-        } else {
+        if (!$event) {
             return response()->json([
                 'message' => 'Event not found'
             ], 404);
         }
+
+        return response()->json($event, 200);
     }
 
-    public function update(Request $request, $id)
+    public function updateEvents(Request $request, $id)
     {
 
         $validated = $request->validate([
-            'picture' => 'nullable',    
+            'cover' => 'nullable',    
             'title' => 'required|string|max:255',
             'date_time' => 'required|date',
             'location' => 'required|string|max:255',
             'description' => 'required|string',
+            'user_id' => 'required|uuid|exists:users,id',
         ]);
 
         $event = Events::findOrFail($id);
@@ -104,11 +87,12 @@ class EventController extends Controller
             ], 404);
         }
         
-        $event-> picture = $validated['picture'] ?? $event->picture;
+        $event-> cover = $validated['cover'] ?? $event->cover;
         $event-> title = $validated['title'];
         $event-> date_time = $validated['date_time'];
         $event-> location = $validated['location'];
         $event-> description = $validated['description'];
+        $event-> user_id = $validated['user_id'];
 
         $event->save();
 
@@ -118,7 +102,7 @@ class EventController extends Controller
         ], 200);
     }
 
-    public function destroy($id)
+    public function destroyEvents($id)
     {
         $event = Events::findOrFail($id);
 
@@ -143,11 +127,19 @@ class EventController extends Controller
         ]);
 
         $event = Events::findOrFail($id);
-        $event->categories()->attach($validated['categories']);
 
+        if (!$event) {
+            return response()->json([
+                'message' => 'Event not found'
+            ], 404);
+        }
+
+        $event->categories()->attach($validated['categories']);
+        
         return response()->json([
-            'message' => 'Category added to event successfully'
-        ], 201);
+            'message' => 'Category attached to event successfully',
+            // 'event' => $event->load('categories')
+        ], 200);
     }
 
     public function getCategories($id)
@@ -169,6 +161,6 @@ class EventController extends Controller
                     'updated_at' => $category->updated_at,
                 ];
             }),
-        ]);
+        ], 200);
     }
 }

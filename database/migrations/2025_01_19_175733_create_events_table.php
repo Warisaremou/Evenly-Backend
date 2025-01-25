@@ -18,8 +18,11 @@ return new class extends Migration
             $table->dateTime('date_time');
             $table->string('location');
             $table->text('description');
+            $table->uuid('user_id');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -28,6 +31,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Schema::table('events', function (Blueprint $table) {
+        //     $table->dropForeign(['user_id']);
+        // });
+
         Schema::dropIfExists('events');
     }
 };

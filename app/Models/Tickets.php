@@ -32,11 +32,6 @@ class Tickets extends Model
 
     public function user() : BelongsTo
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function orders() : HasMany
-    {
-        return $this->hasMany(Orders::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

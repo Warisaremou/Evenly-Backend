@@ -8,25 +8,32 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function getUsers()
     {
         $users = User::all();
-        return response()->json($users);
+
+        if ($users->isEmpty()) {
+            return response()->json([
+                'message' => 'No users found'
+            ], 404);
+        }
+
+        return response()->json($users, 200);
     }
 
-    public function store(Request $request)
+    public function createUsers(Request $request)
     {
         $validated = $request->validate([
-            'fisrtname' => 'required|string|max:255',
+            'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'role_id' => 'required|uuid|exists:roles,id',
-            'organizer_name' => 'required|string|max:255',
+            'organizer_name' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
-            'firstname' => $validated['name'],
+            'firstname' => $validated['firstname'],
             'lastname' => $validated['lastname'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -40,9 +47,58 @@ class UserController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function getUsersById($id)
     {
-        $user = User::with(['role', 'ticket'])->find($id);
+        $user = User::findOrFail($id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        return response()->json($user, 200);
+
+    }
+
+    public function getEventsByUser($id)
+    {
+        $user = User::with('events')->find($id);
+
+        if ($user) {
+            return response()->json([
+                'user' => [
+                    'id' => $user->id,
+                    'firstname' => $user->firstname,
+                    'lastname' => $user->lastname,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'organizer_name' => $user->organizer_name,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ],
+                'events' => $user->events->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'cover' => $event->cover,
+                        'title' => $event->title,
+                        'date_time' => $event->date_time,
+                        'location' => $event->location,
+                        'created_at' => $event->created_at,
+                        'updated_at' => $event->updated_at,
+                    ];
+                }),
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'User not found'
+        ], 404);
+    }
+
+    public function getTicketsByUser($id)
+    {
+        $user = User::with('tickets')->find($id);
 
         if ($user) {
             return response()->json([
@@ -62,12 +118,13 @@ class UserController extends Controller
                         'name' => $ticket->name,
                         'quantity' => $ticket->quantity,
                         'price' => $ticket->price,
+                        'event_id' => $ticket->event_id,
+                        'type_ticket_id' => $ticket->type_ticket_id,
                         'created_at' => $ticket->created_at,
                         'updated_at' => $ticket->updated_at,
-                        'deleted_at' => $ticket->deleted_at,
                     ];
                 }),
-            ]);
+            ], 200);
         }
 
         return response()->json([
@@ -75,50 +132,20 @@ class UserController extends Controller
         ], 404);
     }
 
-    public function getUserOrders($id)
-    {
-        $user = User::with('orders')->find($id);
 
-        if ($user) {
-            return response()->json([
-                'user' => [
-                    'id' => $user->id,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'organizer_name' => $user->organizer_name,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                ],
-                'orders' => $user->orders->map(function ($order) {
-                    return [
-                        'id' => $order->id,
-                        'name' => $order->name,
-                        'created_at' => $order->created_at,
-                        'updated_at' => $order->updated_at,
-                    ];
-                }),
-            ]);
-        }
-
-        return response()->json([
-            'message' => 'User not found'
-        ], 404);
-    }
-
-    public function update(Request $request, $id)
+    public function updateUsers(Request $request, $id)
     {
         $validated = $request->validate([
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'role_id' => 'required|uuid|exists:roles,id',
-            'organizer_name' => 'required|string|max:255',
+            'organizer_name' => 'nullable|string|max:255',
         ]);
 
         $user = User::findOrFail($id);
+
         if (!$user) {
             return response()->json([
                 'message' => 'User not found'
@@ -132,6 +159,11 @@ class UserController extends Controller
         $user->role_id = $validated['role_id'];
         $user->organizer_name = $validated['organizer_name'];
         $user->save();
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user
+        ], 200);
     }
 
     public function destroy($id)
@@ -148,7 +180,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User deleted successfully'
-        ]);
+        ], 200);
     }
 
 }
