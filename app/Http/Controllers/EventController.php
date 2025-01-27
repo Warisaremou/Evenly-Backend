@@ -76,7 +76,7 @@ class EventController extends Controller
             ], 404);
         }
 
-        return response()->json($event, 200);
+        return response()->json($event[0], 200);
     }
 
     public function updateEvents(Request $request, $id)
