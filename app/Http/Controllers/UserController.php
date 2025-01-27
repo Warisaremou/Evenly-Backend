@@ -2,169 +2,174 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Roles;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function getUsers()
-    {
-        $users = User::all();
-
-        if ($users->isEmpty()) {
-            return response()->json([
-                'message' => 'No users found'
-            ], 404);
-        }
-
-        return response()->json($users, 200);
-    }
-
-    public function createUsers(Request $request)
+    public function registerUsers(Request $request)
     {
         $validated = $request->validate([
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
+            'is_Organizer' => 'required|boolean',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'role_id' => 'required|uuid|exists:roles,id',
-            'organizer_name' => 'nullable|string|max:255',
+            'firstname' => 'required_if:is_Organizer,false|string|max:255',
+            'lastname' => 'required_if:is_Organizer,false|string|max:255',
+            'organizer_name' => 'required_if:is_Organizer,true|string|max:255',
         ]);
 
-        $user = User::create([
-            'firstname' => $validated['firstname'],
-            'lastname' => $validated['lastname'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role_id' => $validated['role_id'],
-            'organizer_name' => $validated['organizer_name'],
-        ]);
+        try {
+            
+            $roleName = $validated['is_Organizer'] ? 'organizer' : 'user';
+            $roleId = Roles::where('name', $roleName)->first()->id;
 
-        return response()->json([
-            'message' => 'User created successfully',
-            'user' => $user
-        ], 201);
-    }
+            $userData = [
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role_id' => $roleId,
+            ];
 
-    public function getUsersById($id)
-    {
-        $user = User::findOrFail($id);
+            if ($validated['is_Organizer']) {
+                $userData['organizer_name'] = $validated['organizer_name'];
+            } else {
+                $userData['firstname'] = $validated['firstname'];
+                $userData['lastname'] = $validated['lastname'];
+            }
 
-        if (!$user) {
+            $user = User::create($userData);
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
             return response()->json([
-                'message' => 'User not found'
-            ], 404);
-        }
-
-        return response()->json($user, 200);
-
-    }
-
-    public function getEventsByUser($id)
-    {
-        $user = User::with('events')->find($id);
-
-        if ($user) {
+                'message' => 'User registered successfully',
+                'user' => $user,
+                'token' => $token
+            ], 201);     
+        }catch (\Exception $e) {
             return response()->json([
-                'user' => [
-                    'id' => $user->id,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'organizer_name' => $user->organizer_name,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                ],
-                'events' => $user->events->map(function ($event) {
-                    return [
-                        'id' => $event->id,
-                        'cover' => $event->cover,
-                        'title' => $event->title,
-                        'date_time' => $event->date_time,
-                        'location' => $event->location,
-                        'created_at' => $event->created_at,
-                        'updated_at' => $event->updated_at,
-                    ];
-                }),
-            ], 200);
+                'message' => 'User registration failed',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'User not found'
-        ], 404);
     }
 
-    public function getTicketsByUser($id)
-    {
-        $user = User::with('tickets')->find($id);
-
-        if ($user) {
-            return response()->json([
-                'user' => [
-                    'id' => $user->id,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'organizer_name' => $user->organizer_name,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                ],
-                'tickets' => $user->tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'quantity' => $ticket->quantity,
-                        'price' => $ticket->price,
-                        'event_id' => $ticket->event_id,
-                        'type_ticket_id' => $ticket->type_ticket_id,
-                        'created_at' => $ticket->created_at,
-                        'updated_at' => $ticket->updated_at,
-                    ];
-                }),
-            ], 200);
-        }
-
-        return response()->json([
-            'message' => 'User not found'
-        ], 404);
-    }
-
-
-    public function updateUsers(Request $request, $id)
+    public function loginUsers(Request $request)
     {
         $validated = $request->validate([
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role_id' => 'required|uuid|exists:roles,id',
-            'organizer_name' => 'nullable|string|max:255',
+            'email' => 'required|email|exists:users',
+            'password' => 'required',
         ]);
 
-        $user = User::findOrFail($id);
+        $user = User::where('email', $validated['email'])->first();
 
-        if (!$user) {
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
-                'message' => 'User not found'
-            ], 404);
+                'message' => 'Invalid credentials'
+            ], 401);
         }
 
-        $user->firstname = $validated['firstname'];
-        $user->lastname = $validated['lastname'];
-        $user->email = $validated['email'];
-        $user->password = Hash::make($validated['password']);
-        $user->role_id = $validated['role_id'];
-        $user->organizer_name = $validated['organizer_name'];
-        $user->save();
+        $token = $user->createToken('auth_token');
 
         return response()->json([
-            'message' => 'User updated successfully',
-            'user' => $user
+            'message' => 'User logged in successfully',
+            'token' => $token->plainTextToken
         ], 200);
     }
+
+    public function getProfile(Request $request)
+    {
+        $authorizationHeader = $request->header('Authorization');
+
+        if (!$authorizationHeader) {
+            return response()->json([
+               'error' => 'Authorization header missing'
+            ], 401);
+        }
+
+        $token = str_replace('Bearer ', '', $authorizationHeader);
+
+        try {
+            $user = Auth::guard('sanctum')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'error' => 'Invalid token or user not found',
+                ], 401);
+            }
+            $userData = User::where('email', $user->email)->with('role')->first();
+
+            if (!$userData) {
+                return response()->json([
+                    'error' => 'User not found in database',
+                ], 404);
+            }
+
+            return response()->json([
+                    'firstname' => $userData->firstname,
+                    'lastname' => $userData->lastname,
+                    'email' => $userData->email,
+                    'organizer_name' => $userData->organizer_name, 
+                    'role' => $userData->role->name, 
+            ], 200);
+
+        }catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to decode token',
+                'message' => $e->getMessage()
+            ], 401);
+        }
+    }
+
+    // public function getUsersById($id)
+    // {
+    //     $user = User::findOrFail($id);
+
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'User not found'
+    //         ], 404);
+    //     }
+
+    //     return response()->json($user, 200);
+
+    // }
+
+    
+    // public function updateUsers(Request $request, $id)
+    // {
+    //     $validated = $request->validate([
+    //         'firstname' => 'required|string|max:255',
+    //         'lastname' => 'required|string|max:255',
+    //         'email' => 'required|email|unique:users,email',
+    //         'password' => 'required|string|min:8',
+    //         'role_id' => 'required|uuid|exists:roles,id',
+    //         'organizer_name' => 'nullable|string|max:255',
+    //     ]);
+
+    //     $user = User::findOrFail($id);
+
+    //     if (!$user) {
+    //         return response()->json([
+    //             'message' => 'User not found'
+    //         ], 404);
+    //     }
+
+    //     $user->firstname = $validated['firstname'];
+    //     $user->lastname = $validated['lastname'];
+    //     $user->email = $validated['email'];
+    //     $user->password = Hash::make($validated['password']);
+    //     $user->role_id = $validated['role_id'];
+    //     $user->organizer_name = $validated['organizer_name'];
+    //     $user->save();
+
+    //     return response()->json([
+    //         'message' => 'User updated successfully',
+    //         'user' => $user
+    //     ], 200);
+    // }
 
     public function destroy($id)
     {

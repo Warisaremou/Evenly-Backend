@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tickets;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TicketsController extends Controller
@@ -58,6 +59,42 @@ class TicketsController extends Controller
         }
 
         return response()->json($ticket, 200);
+    }
+    
+    public function getTicketsByUser($id)
+    {
+        $user = User::with('tickets')->find($id);
+
+        if ($user) {
+            return response()->json([
+                'user' => [
+                    'id' => $user->id,
+                    'firstname' => $user->firstname,
+                    'lastname' => $user->lastname,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'organizer_name' => $user->organizer_name,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ],
+                'tickets' => $user->tickets->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'name' => $ticket->name,
+                        'quantity' => $ticket->quantity,
+                        'price' => $ticket->price,
+                        'event_id' => $ticket->event_id,
+                        'type_ticket_id' => $ticket->type_ticket_id,
+                        'created_at' => $ticket->created_at,
+                        'updated_at' => $ticket->updated_at,
+                    ];
+                }),
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'User not found'
+        ], 404);
     }
 
     public function updateTickets(Request $request, $id)

@@ -3,6 +3,7 @@
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\TicketsController;
 use App\Http\Controllers\TypeTicketsController;
@@ -20,14 +21,11 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "²" middleware group. Make something great!
 |
 */
-// Route::get('/', function () {
-//     return response()->json(['message' => 'Bienvenue dans l\'API'], 200);
-// });
-
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
+
 
 Route::prefix('/api')->group(function (){
     Route::prefix('roles')->group(function () {
@@ -39,13 +37,12 @@ Route::prefix('/api')->group(function (){
     });
 
     Route::prefix('users')->group(function () {
-        Route::get('/', [UserController::class, 'getUsers']);
-        Route::post('/', [UserController::class, 'createUsers']);
-        Route::get('/{id}', [UserController::class, 'getUsersById']);
-        Route::get('/{id}/events', [UserController::class, 'getEventsByUser']);
-        Route::get('/{id}/tickets', [UserController::class, 'getTicketsByUser']);
-        // Route::put('/{id}', [UserController::class, 'updateUsers']);
-        Route::delete('/{id}', [UserController::class, 'destroyUsers']);
+        Route::post('/register', [UserController::class, 'registerUsers']);
+        Route::post('/login', [UserController::class, 'loginUsers']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('/profile', [UserController::class, 'getProfile']);
+            Route::delete('/{id}', [UserController::class, 'destroyUsers']);
+        });
     });
 
     Route::prefix('events')->group(function () {
@@ -54,6 +51,7 @@ Route::prefix('/api')->group(function (){
         Route::get('/{id}', [EventController::class, 'getEventsById']);
         Route::patch('/{id}', [EventController::class, 'updateEvents']);
         Route::delete('/{id}', [EventController::class, 'destroyEvents']);
+        Route::get('/{id}/events', [UserController::class, 'getEventsByUser'])->middleware('auth:sanctum');
         Route::post('/{id}/categories', [EventController::class, 'attachCategory']);
         Route::get('/{id}/categories', [EventController::class, 'getCategories']);
     });
@@ -81,6 +79,7 @@ Route::prefix('/api')->group(function (){
         Route::get('/', [TicketsController::class, 'getTickets']);
         Route::post('/', [TicketsController::class, 'createTickets']);
         Route::get('/{id}', [TicketsController::class, 'getTicketsById']);
+        Route::get('/{id}/tickets', [UserController::class, 'getTicketsByUser'])->middleware('auth:sanctum');
         // Route::get('/{id}/orders', [TicketsController::class, 'getOrders']);
         Route::patch('/{id}', [TicketsController::class, 'updateTickets']);
         Route::delete('/{id}', [TicketsController::class, 'destroyTickets']);

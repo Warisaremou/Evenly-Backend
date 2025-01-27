@@ -3,11 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Events;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class EventController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum', ['except' => ['getEvents', 'getEventsById']]);
+    }
+
     public function getEvents()
     {
         $events = Events::all();
@@ -23,15 +30,20 @@ class EventController extends Controller
 
     public function createEvents(Request $request)
     {
-        // Log::info('Requête reçue', $request->all());
+        $user = $request->user();
+
+        if ($user->role->name !== 'organizer') { 
+            return response()->json([
+                'error' => 'Only organizers can create events.',
+            ], 403); 
+        }
 
         $validated = $request->validate([
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',    
             'title' => 'required|string|max:255',
-            'date_time' => 'required|date',
+            'date_time' => 'required|date_format:Y-m-d H:i:s',
             'location' => 'required|string|max:255',
             'description' => 'required|string',
-            'user_id' => 'required|uuid|exists:users,id',
         ]);
         
         $coverPath = null;
@@ -45,7 +57,7 @@ class EventController extends Controller
             'date_time' => $validated['date_time'],
             'location' => $validated['location'],
             'description' => $validated['description'],
-            'user_id' => $validated['user_id'], 
+            'user_id' => $user->id,
         ]);
 
         return response()->json([
@@ -69,17 +81,25 @@ class EventController extends Controller
 
     public function updateEvents(Request $request, $id)
     {
+        $user = $request->user();
+        $event = Events::findOrFail($id);
+        Gate::authorize('modify', $event);
+
+        if ($user->role->name !== 'organizer') { 
+            return response()->json([
+                'error' => 'Only organizers can update events.',
+            ], 403); 
+        }
 
         $validated = $request->validate([
             'cover' => 'nullable',    
             'title' => 'required|string|max:255',
-            'date_time' => 'required|date',
+            'date_time' => 'required|date_format:Y-m-d H:i:s',
             'location' => 'required|string|max:255',
             'description' => 'required|string',
-            'user_id' => 'required|uuid|exists:users,id',
         ]);
 
-        $event = Events::findOrFail($id);
+        // $event = Events::findOrFail($id);
 
         if (!$event) {
             return response()->json([
@@ -92,7 +112,7 @@ class EventController extends Controller
         $event-> date_time = $validated['date_time'];
         $event-> location = $validated['location'];
         $event-> description = $validated['description'];
-        $event-> user_id = $validated['user_id'];
+        $event-> user_id = $user->id;
 
         $event->save();
 
@@ -102,9 +122,19 @@ class EventController extends Controller
         ], 200);
     }
 
-    public function destroyEvents($id)
+    public function destroyEvents(Request $request, $id)
     {
         $event = Events::findOrFail($id);
+        Gate::authorize('modify', $event);
+
+        $user = $request->user();
+        if ($user->role->name !== 'organizer') { 
+            return response()->json([
+                'error' => 'Only organizers can delete events.',
+            ], 403); 
+        }
+
+        // $event = Events::findOrFail($id);
 
         if (!$event) {
             return response()->json([
@@ -117,6 +147,41 @@ class EventController extends Controller
         return response()->json([
             'message' => 'Event deleted successfully'
         ], 200);
+    }
+
+    public function getEventsByUser($id)
+    {
+        $user = User::with('events')->find($id);
+
+        if ($user) {
+            return response()->json([
+                'user' => [
+                    'id' => $user->id,
+                    'firstname' => $user->firstname,
+                    'lastname' => $user->lastname,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'organizer_name' => $user->organizer_name,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ],
+                'events' => $user->events->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'cover' => $event->cover,
+                        'title' => $event->title,
+                        'date_time' => $event->date_time,
+                        'location' => $event->location,
+                        'created_at' => $event->created_at,
+                        'updated_at' => $event->updated_at,
+                    ];
+                }),
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'User not found'
+        ], 404);
     }
 
     public function attachCategory(Request $request, $id)

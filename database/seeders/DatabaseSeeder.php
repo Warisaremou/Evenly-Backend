@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             TypeTicketSeeder::class,
             CategorySeeder::class,
+            // UserSeeder::class,
         ]);
     }
 }
