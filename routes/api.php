@@ -41,6 +41,7 @@ Route::prefix('/api')->group(function (){
         Route::post('/login', [UserController::class, 'loginUsers']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/profile', [UserController::class, 'getProfile']);
+            Route::get('/updateprofile', [UserController::class, 'updateprofile']);
             Route::delete('/{id}', [UserController::class, 'destroyUsers']);
         });
     });

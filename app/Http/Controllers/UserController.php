@@ -134,38 +134,33 @@ class UserController extends Controller
     // }
 
     
-    // public function updateUsers(Request $request, $id)
-    // {
-    //     $validated = $request->validate([
-    //         'firstname' => 'required|string|max:255',
-    //         'lastname' => 'required|string|max:255',
-    //         'email' => 'required|email|unique:users,email',
-    //         'password' => 'required|string|min:8',
-    //         'role_id' => 'required|uuid|exists:roles,id',
-    //         'organizer_name' => 'nullable|string|max:255',
-    //     ]);
+    public function updateprofile(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'is_Organizer' => 'required|boolean',
+            'firstname' => 'required_if:is_Organizer,false|string|max:255',
+            'lastname' => 'required_if:is_Organizer,false|string|max:255',
+            'organizer_name' => 'required_if:is_Organizer,true|string|max:255',
+        ]);
 
-    //     $user = User::findOrFail($id);
+        $user = User::findOrFail($id);
 
-    //     if (!$user) {
-    //         return response()->json([
-    //             'message' => 'User not found'
-    //         ], 404);
-    //     }
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
 
-    //     $user->firstname = $validated['firstname'];
-    //     $user->lastname = $validated['lastname'];
-    //     $user->email = $validated['email'];
-    //     $user->password = Hash::make($validated['password']);
-    //     $user->role_id = $validated['role_id'];
-    //     $user->organizer_name = $validated['organizer_name'];
-    //     $user->save();
+        $user->firstname = $validated['firstname'];
+        $user->lastname = $validated['lastname'];
+        $user->organizer_name = $validated['organizer_name'];
+        $user->save();
 
-    //     return response()->json([
-    //         'message' => 'User updated successfully',
-    //         'user' => $user
-    //     ], 200);
-    // }
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user
+        ], 200);
+    }
 
     public function destroy($id)
     {
