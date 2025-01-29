@@ -25,50 +25,55 @@ class EventController extends Controller
 
     public function createEvents(Request $request)
     {
-        $user = Auth::guard('sanctum')->user();
+        try {
+            $user = Auth::guard('sanctum')->user();
 
-        if (!$user || $user->role->name !== 'organizer') { 
-            return response()->json([
+            if (!$user || $user->role->name !== 'organizer') { 
+                return response()->json([
                 'error' => 'Only organizers can create events.',
-            ], 403); 
+                ], 403); 
+            }
+
+            $validated = $request->validate([
+                // 'cover' => 'image|mimes:jpeg,png,jpg,gif|max:2048',    
+                'cover' => 'required|image|mimes:jpeg,png,jpg,gif|max:2000',    
+                'title' => 'required|string|max:255',
+                'date_time' => 'required|date_format:Y-m-d H:i:s',
+                'location' => 'required|string|max:255',
+                'description' => 'required|string',
+                'categories' => 'required|array',
+                'categories.*' => 'exists:categories,id'
+            ]);
+
+            // Essaie l'upload pour voir de ton côté
+            // $uploadedCover = cloudinary()->upload($request->file('cover')->getRealPath())->getSecurePath();
+            // dd($request->file('cover'));
+
+            // Faut retester
+            $event = Events::create([
+                // 'cover' => $uploadedCover,
+                'cover' => null,
+                'title' => $validated['title'],
+                'date_time' => $validated['date_time'],
+                'location' => $validated['location'],
+                'description' => $validated['description'],
+                'user_id' => $user->id,
+            ]);
+
+            collect($validated['categories'])->map(function ($categoryId) use ($event) {
+                $event->categories()->attach($categoryId);
+            });
+
+            return response()->json([
+                'message' => 'Event created successfully',
+                'data' => $event
+            ], 201);
+        }catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create event',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $validated = $request->validate([
-            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',    
-            'title' => 'required|string|max:255',
-            'date_time' => 'required|date_format:Y-m-d H:i:s',
-            'location' => 'required|string|max:255',
-            'description' => 'required|string',
-            'categories' => 'required|array',
-            'categories.*' => 'exists:categories,id'
-        ]);
-        
-        $coverPath = null;
-        if ($request->hasFile('cover')) {
-            $file = $request->file('cover');
-            
-            $uploadResult = Cloudinary::upload($file->getRealPath(), ['folder' => 'events']);
-
-            $coverPath = $uploadResult->getSecurePath();
-        }
-
-        $event = Events::create([
-            'cover' => $coverPath,
-            'title' => $validated['title'],
-            'date_time' => $validated['date_time'],
-            'location' => $validated['location'],
-            'description' => $validated['description'],
-            'user_id' => $user->id,
-        ]);
-
-        collect($validated['categories'])->map(function ($categoryId) use ($event) {
-            $event->categories()->attach($categoryId);
-        });
-
-        return response()->json([
-            'message' => 'Event created successfully',
-            'data' => $event
-        ], 201);
     }
 
     public function getEventsById($id)
