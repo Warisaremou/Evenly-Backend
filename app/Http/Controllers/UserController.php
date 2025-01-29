@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Roles;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class UserController extends Controller
 {
@@ -134,37 +135,52 @@ class UserController extends Controller
     // }
 
     
-    public function updateprofile(Request $request, $id)
+    public function updateProfile(Request $request)
     {
+        $user = Auth::guard('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
         $validated = $request->validate([
-            'is_Organizer' => 'required|boolean',
-            'firstname' => 'required_if:is_Organizer,false|string|max:255',
-            'lastname' => 'required_if:is_Organizer,false|string|max:255',
-            'organizer_name' => 'required_if:is_Organizer,true|string|max:255',
+            'firstname' => 'required_if:is_Organizer,false|nullable|string|max:255',
+            'lastname' => 'required_if:is_Organizer,false|nullable|string|max:255',
+            'organizer_name' => 'required_if:is_Organizer,true|nullable|string|max:255',
         ]);
 
-        $user = User::findOrFail($id);
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
+        if ($user->role && $user->role->name === 'organizer') {
+            if (isset($validated['organizer_name'])) {
+                $user->organizer_name = $validated['organizer_name'];
+            }
+        } else {
+            if (isset($validated['firstname'])) {
+                $user->firstname = $validated['firstname'];
+            }
+            if (isset($validated['lastname'])) {
+                $user->lastname = $validated['lastname'];
+            }
         }
-
-        $user->firstname = $validated['firstname'];
-        $user->lastname = $validated['lastname'];
-        $user->organizer_name = $validated['organizer_name'];
-        $user->save();
-
+        
+        try {
+            $user->save();
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update profile',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+        
         return response()->json([
-            'message' => 'User updated successfully',
-            'user' => $user
-        ], 200);
+            'message' => 'Profile updated successfully',
+        ], 200); 
     }
 
-    public function destroy($id)
+    public function deleteProfile(Request $request)
     {
-        $user = User::findOrFail($id);
+        $user = Auth::guard('sanctum')->user();
 
         if (!$user) {
             return response()->json([
@@ -172,11 +188,17 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->delete();
-
+        try {
+            $user->delete(); 
+            return response()->json([
+                'message' => 'Your profile has been deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
         return response()->json([
-            'message' => 'User deleted successfully'
-        ], 200);
+            'message' => 'Failed to delete profile',
+            'error' => $e->getMessage()
+        ], 500);
+        }
     }
 
 }

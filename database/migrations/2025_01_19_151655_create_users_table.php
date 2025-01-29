@@ -22,6 +22,7 @@ return new class extends Migration
             $table->rememberToken();
             $table->string('organizer_name')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Events;
 use App\Models\User;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -24,9 +25,9 @@ class EventController extends Controller
 
     public function createEvents(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::guard('sanctum')->user();
 
-        if ($user->role->name !== 'organizer') { 
+        if (!$user || $user->role->name !== 'organizer') { 
             return response()->json([
                 'error' => 'Only organizers can create events.',
             ], 403); 
@@ -42,7 +43,13 @@ class EventController extends Controller
         
         $coverPath = null;
         if ($request->hasFile('cover')) {
-            $validated['cover'] = $request->file('cover')->store('images');
+            $file = $request->file('cover');
+            
+            $uploadResult = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'events', 
+            ]);
+
+            $coverPath = $uploadResult->getSecurePath();
         }
 
         $event = Events::create([

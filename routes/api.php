@@ -41,18 +41,20 @@ Route::prefix('/api')->group(function (){
         Route::post('/login', [UserController::class, 'loginUsers']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/profile', [UserController::class, 'getProfile']);
-            Route::get('/updateprofile', [UserController::class, 'updateprofile']);
-            Route::delete('/{id}', [UserController::class, 'destroyUsers']);
+            Route::put('/profile', [UserController::class, 'updateProfile']);
+            Route::delete('/profile', [UserController::class, 'deleteProfile']);
         });
     });
 
     Route::prefix('events')->group(function () {
-        Route::get('/', [EventController::class, 'getEvents']);
-        Route::post('/', [EventController::class, 'createEvents']);
-        Route::get('/{id}', [EventController::class, 'getEventsById']);
-        Route::patch('/{id}', [EventController::class, 'updateEvents']);
-        Route::delete('/{id}', [EventController::class, 'destroyEvents']);
-        Route::get('/{id}/events', [UserController::class, 'getEventsByUser'])->middleware('auth:sanctum');
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('/', [EventController::class, 'getEvents']);
+            Route::post('/', [EventController::class, 'createEvents']);
+            Route::get('/{id}', [EventController::class, 'getEventsById']);
+            Route::patch('/{id}', [EventController::class, 'updateEvents']);
+            Route::delete('/{id}', [EventController::class, 'destroyEvents']);
+            Route::get('/{id}/events', [UserController::class, 'getEventsByUser']);
+        });
         Route::post('/{id}/categories', [EventController::class, 'attachCategory']);
         Route::get('/{id}/categories', [EventController::class, 'getCategories']);
     });
