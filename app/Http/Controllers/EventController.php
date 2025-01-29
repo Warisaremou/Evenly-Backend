@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Events;
 use App\Models\User;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -35,7 +34,6 @@ class EventController extends Controller
             }
 
             $validated = $request->validate([
-                // 'cover' => 'image|mimes:jpeg,png,jpg,gif|max:2048',    
                 'cover' => 'required|image|mimes:jpeg,png,jpg,gif|max:2000',    
                 'title' => 'required|string|max:255',
                 'date_time' => 'required|date_format:Y-m-d H:i:s',
@@ -46,13 +44,13 @@ class EventController extends Controller
             ]);
 
             // Essaie l'upload pour voir de ton côté
-            // $uploadedCover = cloudinary()->upload($request->file('cover')->getRealPath())->getSecurePath();
+            $uploadedCover = cloudinary()->upload($request->file('cover')->getRealPath(), [ 'folder' => 'events', 'verify' => false ]);
             // dd($request->file('cover'));
 
             // Faut retester
             $event = Events::create([
-                // 'cover' => $uploadedCover,
-                'cover' => null,
+                'cover' => $uploadedCover,
+                // 'cover' => null,
                 'title' => $validated['title'],
                 'date_time' => $validated['date_time'],
                 'location' => $validated['location'],
@@ -70,7 +68,7 @@ class EventController extends Controller
             ], 201);
         }catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to create event',
+                'message' => 'Server error',
                 'error' => $e->getMessage()
             ], 500);
         }
