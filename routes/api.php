@@ -55,7 +55,6 @@ Route::prefix('/api')->group(function () {
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
             Route::get('/{id}/events', [UserController::class, 'getEventsByUser']);
         });
-        // Route::post('/{id}/categories', [EventController::class, 'attachCategory']);
         Route::get('/{id}/categories', [EventController::class, 'getCategories']);
     });
 

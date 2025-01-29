@@ -39,8 +39,8 @@ class EventController extends Controller
             'date_time' => 'required|date_format:Y-m-d H:i:s',
             'location' => 'required|string|max:255',
             'description' => 'required|string',
-            // 'categories' => 'required|array',
-            // 'categories.*' => 'exists:categories,id'
+            'categories' => 'required|array',
+            'categories.*' => 'exists:categories,id'
         ]);
         
         $coverPath = null;
@@ -61,9 +61,9 @@ class EventController extends Controller
             'user_id' => $user->id,
         ]);
 
-        // collect($validated['categories'])->map(function ($categoryId) use ($event) {
-        //     $event->categories()->attach($categoryId);
-        // });
+        collect($validated['categories'])->map(function ($categoryId) use ($event) {
+            $event->categories()->attach($categoryId);
+        });
 
         return response()->json([
             'message' => 'Event created successfully',
