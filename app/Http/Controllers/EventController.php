@@ -39,15 +39,15 @@ class EventController extends Controller
             'date_time' => 'required|date_format:Y-m-d H:i:s',
             'location' => 'required|string|max:255',
             'description' => 'required|string',
+            // 'categories' => 'required|array',
+            // 'categories.*' => 'exists:categories,id'
         ]);
         
         $coverPath = null;
         if ($request->hasFile('cover')) {
             $file = $request->file('cover');
             
-            $uploadResult = Cloudinary::upload($file->getRealPath(), [
-                'folder' => 'events', 
-            ]);
+            $uploadResult = Cloudinary::upload($file->getRealPath(), ['folder' => 'events']);
 
             $coverPath = $uploadResult->getSecurePath();
         }
@@ -60,6 +60,10 @@ class EventController extends Controller
             'description' => $validated['description'],
             'user_id' => $user->id,
         ]);
+
+        // collect($validated['categories'])->map(function ($categoryId) use ($event) {
+        //     $event->categories()->attach($categoryId);
+        // });
 
         return response()->json([
             'message' => 'Event created successfully',
@@ -135,8 +139,6 @@ class EventController extends Controller
             ], 403); 
         }
 
-        // $event = Events::findOrFail($id);
-
         if (!$event) {
             return response()->json([
                 'message' => 'Event not found'
@@ -185,28 +187,28 @@ class EventController extends Controller
         ], 404);
     }
 
-    public function attachCategory(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'categories' => 'required|array',
-            'categories.*' => 'exists:categories,id',
-        ]);
+    // public function attachCategory(Request $request, $id)
+    // {
+    //     $validated = $request->validate([
+    //         'categories' => 'required|array',
+    //         'categories.*' => 'exists:categories,id',
+    //     ]);
 
-        $event = Events::findOrFail($id);
+    //     $event = Events::findOrFail($id);
 
-        if (!$event) {
-            return response()->json([
-                'message' => 'Event not found'
-            ], 404);
-        }
+    //     if (!$event) {
+    //         return response()->json([
+    //             'message' => 'Event not found'
+    //         ], 404);
+    //     }
 
-        $event->categories()->attach($validated['categories']);
+    //     $event->categories()->attach($validated['categories']);
         
-        return response()->json([
-            'message' => 'Category attached to event successfully',
-            // 'event' => $event->load('categories')
-        ], 200);
-    }
+    //     return response()->json([
+    //         'message' => 'Category attached to event successfully',
+    //         // 'event' => $event->load('categories')
+    //     ], 200);
+    // }
 
     public function getCategories($id)
     {

@@ -47,15 +47,15 @@ Route::prefix('/api')->group(function (){
     });
 
     Route::prefix('events')->group(function () {
+        Route::get('/', [EventController::class, 'getEvents']);
         Route::middleware('auth:sanctum')->group(function () {
-            Route::get('/', [EventController::class, 'getEvents']);
             Route::post('/', [EventController::class, 'createEvents']);
             Route::get('/{id}', [EventController::class, 'getEventsById']);
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
             Route::get('/{id}/events', [UserController::class, 'getEventsByUser']);
         });
-        Route::post('/{id}/categories', [EventController::class, 'attachCategory']);
+        // Route::post('/{id}/categories', [EventController::class, 'attachCategory']);
         Route::get('/{id}/categories', [EventController::class, 'getCategories']);
     });
 
