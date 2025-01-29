@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 // });
 
 
-Route::prefix('/api')->group(function (){
+Route::prefix('/api')->group(function () {
     Route::prefix('roles')->group(function () {
         Route::get('/', [RolesController::class, 'getRoles']);
         // Route::post('/', [RolesController::class, 'createRoles']);
@@ -48,9 +48,9 @@ Route::prefix('/api')->group(function (){
 
     Route::prefix('events')->group(function () {
         Route::get('/', [EventController::class, 'getEvents']);
+        Route::get('/{id}', [EventController::class, 'getEventsById']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [EventController::class, 'createEvents']);
-            Route::get('/{id}', [EventController::class, 'getEventsById']);
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
             Route::get('/{id}/events', [UserController::class, 'getEventsByUser']);
@@ -96,5 +96,3 @@ Route::prefix('/api')->group(function (){
         Route::delete('/{id}', [OrdersController::class, 'destroyOrders']);
     });
 });
-
-
