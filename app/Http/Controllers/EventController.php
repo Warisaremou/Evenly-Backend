@@ -12,14 +12,33 @@ class EventController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum', ['except' => ['getEvents', 'getEventsById']]);
+        $this->middleware('auth:sanctum', ['except' => ['getAllEvents', 'getEventsById']]);
     }
 
-    public function getEvents()
+    public function getAllEvents()
     {
-        $events = Events::all();
+        $events = Events::with('categories')->get();
 
-        return response()->json(data: $events, status: 200);
+        return response()->json([
+            'data' => $events->map(function ($event) {
+                return [
+                    'cover' => $event->cover,
+                    'title' => $event->title,
+                    'date_time' => $event->date_time,
+                    'location' => $event->location,
+                    'description' => $event->description,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at,
+                    'categories' => $event->categories->map(function ($category) {
+                        return [
+                            'name' => $category->name,
+                            'created_at' => $category->created_at,
+                            'updated_at' => $category->updated_at,
+                        ];
+                    }),
+                ];
+            }),
+        ], 200);
     }
 
     public function createEvents(Request $request)
@@ -155,7 +174,7 @@ class EventController extends Controller
         ], 200);
     }
 
-    public function getEventsByUser($id)
+    public function getEventsByOrganizer($id)
     {
         $user = User::with('events')->find($id);
 
@@ -189,29 +208,6 @@ class EventController extends Controller
             'message' => 'User not found'
         ], 404);
     }
-
-    // public function attachCategory(Request $request, $id)
-    // {
-    //     $validated = $request->validate([
-    //         'categories' => 'required|array',
-    //         'categories.*' => 'exists:categories,id',
-    //     ]);
-
-    //     $event = Events::findOrFail($id);
-
-    //     if (!$event) {
-    //         return response()->json([
-    //             'message' => 'Event not found'
-    //         ], 404);
-    //     }
-
-    //     $event->categories()->attach($validated['categories']);
-        
-    //     return response()->json([
-    //         'message' => 'Category attached to event successfully',
-    //         // 'event' => $event->load('categories')
-    //     ], 200);
-    // }
 
     public function getCategories($id)
     {
