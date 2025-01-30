@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Events;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -46,14 +47,14 @@ class EventController extends Controller
         try {
             $user = Auth::guard('sanctum')->user();
 
-            if (!$user || $user->role->name !== 'organizer') { 
+            if (!$user || $user->role->name !== 'organizer') {
                 return response()->json([
-                'error' => 'Only organizers can create events.',
-                ], 403); 
+                    'error' => 'Only organizers can create events.',
+                ], 403);
             }
 
             $validated = $request->validate([
-                'cover' => 'required|image|mimes:jpeg,png,jpg,gif|max:2000',    
+                'cover' => 'required|image|mimes:jpeg,png,jpg,gif|max:2000',
                 'title' => 'required|string|max:255',
                 'date_time' => 'required|date_format:Y-m-d H:i:s',
                 'location' => 'required|string|max:255',
@@ -62,14 +63,12 @@ class EventController extends Controller
                 'categories.*' => 'exists:categories,id'
             ]);
 
-            // Essaie l'upload pour voir de ton côté
-            $uploadedCover = cloudinary()->upload($request->file('cover')->getRealPath(), [ 'folder' => 'events', 'verify' => false ]);
-            // dd($request->file('cover'));
+            // Upload image to cloudinary
+            $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+            // dd($uploadedCoverUrl);
 
-            // Faut retester
             $event = Events::create([
-                'cover' => $uploadedCover,
-                // 'cover' => null,
+                'cover' => $uploadedCoverUrl,
                 'title' => $validated['title'],
                 'date_time' => $validated['date_time'],
                 'location' => $validated['location'],
@@ -85,11 +84,10 @@ class EventController extends Controller
                 'message' => 'Event created successfully',
                 'data' => $event
             ], 201);
-        }catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
-                'message' => 'Server error',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => $e->getMessage()
+            ],  500);
         }
     }
 
@@ -112,14 +110,14 @@ class EventController extends Controller
         $event = Events::findOrFail($id);
         Gate::authorize('modify', $event);
 
-        if ($user->role->name !== 'organizer') { 
+        if ($user->role->name !== 'organizer') {
             return response()->json([
                 'error' => 'Only organizers can update events.',
-            ], 403); 
+            ], 403);
         }
 
         $validated = $request->validate([
-            'cover' => 'nullable',    
+            'cover' => 'nullable',
             'title' => 'required|string|max:255',
             'date_time' => 'required|date_format:Y-m-d H:i:s',
             'location' => 'required|string|max:255',
@@ -133,13 +131,13 @@ class EventController extends Controller
                 'message' => 'Event not found'
             ], 404);
         }
-        
-        $event-> cover = $validated['cover'] ?? $event->cover;
-        $event-> title = $validated['title'];
-        $event-> date_time = $validated['date_time'];
-        $event-> location = $validated['location'];
-        $event-> description = $validated['description'];
-        $event-> user_id = $user->id;
+
+        $event->cover = $validated['cover'] ?? $event->cover;
+        $event->title = $validated['title'];
+        $event->date_time = $validated['date_time'];
+        $event->location = $validated['location'];
+        $event->description = $validated['description'];
+        $event->user_id = $user->id;
 
         $event->save();
 
@@ -155,10 +153,10 @@ class EventController extends Controller
         Gate::authorize('modify', $event);
 
         $user = $request->user();
-        if ($user->role->name !== 'organizer') { 
+        if ($user->role->name !== 'organizer') {
             return response()->json([
                 'error' => 'Only organizers can delete events.',
-            ], 403); 
+            ], 403);
         }
 
         if (!$event) {
@@ -208,6 +206,29 @@ class EventController extends Controller
             'message' => 'User not found'
         ], 404);
     }
+
+    // public function attachCategory(Request $request, $id)
+    // {
+    //     $validated = $request->validate([
+    //         'categories' => 'required|array',
+    //         'categories.*' => 'exists:categories,id',
+    //     ]);
+
+    //     $event = Events::findOrFail($id);
+
+    //     if (!$event) {
+    //         return response()->json([
+    //             'message' => 'Event not found'
+    //         ], 404);
+    //     }
+
+    //     $event->categories()->attach($validated['categories']);
+        
+    //     return response()->json([
+    //         'message' => 'Category attached to event successfully',
+    //         // 'event' => $event->load('categories')
+    //     ], 200);
+    // }
 
     public function getCategories($id)
     {

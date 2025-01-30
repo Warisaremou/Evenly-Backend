@@ -10,14 +10,7 @@ class TicketsController extends Controller
 {
     public function getTickets()
     {
-        $tickets = Tickets::all()->paginate(10);
-        
-        if ($tickets->isEmpty()) {
-            return response()->json([
-                'message' => 'Tickets not found'
-            ], 404);
-        }
-
+        $tickets = Tickets::paginate(10);
         return response()->json($tickets, 200);
     }
 
@@ -29,7 +22,7 @@ class TicketsController extends Controller
             'price' => 'required|numeric',
             'user_id' => 'required|uuid|exists:users,id',
             'event_id' => 'required|uuid|exists:events,id',
-            'type_ticket_id' => 'required|uuid|exists:type_tickets,id',  
+            'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
         ]);
 
         $ticket = Tickets::create([
@@ -60,7 +53,7 @@ class TicketsController extends Controller
 
         return response()->json($ticket, 200);
     }
-    
+
     public function getTicketsByUser($id)
     {
         $user = User::with('tickets')->find($id);
@@ -106,7 +99,7 @@ class TicketsController extends Controller
             'price' => 'required|numeric',
             'user_id' => 'required|uuid|exists:users,id',
             'event_id' => 'required|uuid|exists:events,id',
-            'type_ticket_id' => 'required|uuid|exists:type_tickets,id',  
+            'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
         ]);
 
         $ticket = Tickets::findOrFail($id);
@@ -116,7 +109,7 @@ class TicketsController extends Controller
                 'message' => 'Ticket not found'
             ], 404);
         }
-        
+
         $ticket->name = $validated['name'];
         $ticket->quantity = $validated['quantity'];
         $ticket->price = $validated['price'];
