@@ -77,13 +77,15 @@ Route::prefix('/api')->group(function () {
         Route::delete('/{id}', [TypeTicketsController::class, 'destroyTypeTickets']);
     });
 
-    Route::prefix('tickets')->group(function () {
-        Route::get('/', [TicketsController::class, 'getTickets']);
-        Route::post('/', [TicketsController::class, 'createTickets']);
-        Route::get('/{id}', [TicketsController::class, 'getTicketsById']);
-        Route::get('/{id}/tickets', [UserController::class, 'getTicketsByUser'])->middleware('auth:sanctum');
-        Route::patch('/{id}', [TicketsController::class, 'updateTickets']);
-        Route::delete('/{id}', [TicketsController::class, 'destroyTickets']);
+    Route::controller(TicketsController::class)->prefix('tickets')->group(function () {
+        Route::get('/', 'getTickets');
+        Route::get('/{id}', 'getTicketsById');
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', 'addTickets');
+            Route::get('/organizer/tickets', 'getTicketsByOrganizer');
+            Route::patch('/{id}', 'updateTickets');
+            Route::delete('/{id}', 'removeTicket');
+        });
     });
 
     Route::prefix('orders')->group(function () {
