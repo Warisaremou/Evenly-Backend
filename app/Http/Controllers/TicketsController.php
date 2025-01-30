@@ -146,34 +146,40 @@ class TicketsController extends Controller
 
     public function removeTicket(Request $request, $id)
     {
-        if ($request->user()->role->name !== 'organizer') {
+        try {
+            if ($request->user()->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can add tickets.',
+                ], 403);
+            }
+
+            $userID = $request->user()->id;
+
+            $ticket = Tickets::findOrFail($id);
+
+            if (!$ticket) {
+                return response()->json([
+                    'message' => 'Ticket not found'
+                ], 404);
+            }
+
+            $isTicketOwner = Tickets::where('user_id', $userID)->firstOrFail();
+
+            if (!$isTicketOwner) {
+                return response()->json([
+                    'message' => 'Only ticket owner can remove ticket',
+                ], 403);
+            };
+
+            $ticket->delete();
+
             return response()->json([
-                'error' => 'Only organizers can add tickets.',
-            ], 403);
+                'message' => 'Ticket deleted successfully',
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
         }
-
-        $userID = $request->user()->id;
-
-        $ticket = Tickets::findOrFail($id);
-
-        if (!$ticket) {
-            return response()->json([
-                'message' => 'Ticket not found'
-            ], 404);
-        }
-
-        $isTicketOwner = Tickets::where('user_id', $userID)->firstOrFail();
-
-        if (!$isTicketOwner) {
-            return response()->json([
-                'message' => 'Only ticket owner can remove ticket',
-            ], 403);
-        };
-
-        $ticket->delete();
-
-        return response()->json([
-            'message' => 'Ticket deleted successfully',
-        ], 200);
     }
 }
