@@ -82,7 +82,6 @@ Route::prefix('/api')->group(function () {
         Route::post('/', [TicketsController::class, 'createTickets']);
         Route::get('/{id}', [TicketsController::class, 'getTicketsById']);
         Route::get('/{id}/tickets', [UserController::class, 'getTicketsByUser'])->middleware('auth:sanctum');
-        // Route::get('/{id}/orders', [TicketsController::class, 'getOrders']);
         Route::patch('/{id}', [TicketsController::class, 'updateTickets']);
         Route::delete('/{id}', [TicketsController::class, 'destroyTickets']);
     });
