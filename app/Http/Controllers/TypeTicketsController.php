@@ -17,7 +17,7 @@ class TypeTicketsController extends Controller
             ], 404);
         }
 
-        return response()->json($type_tickets, 200);
+        return response()->json(['data' => $type_tickets], 200);
     }
 
     public function createTypeTickets(Request $request)
@@ -32,7 +32,7 @@ class TypeTicketsController extends Controller
 
         return response()->json([
             'message' => 'TypeTicket created successfully',
-            'type_ticket' => $type_ticket
+            'data' => $type_ticket
         ], 201);
     }
 
@@ -47,69 +47,9 @@ class TypeTicketsController extends Controller
         }
 
         return response()->json([
-            'type_ticket' => $type_ticket
+            'data' => $type_ticket
         ], 200);
     }
-
-
-    // public function showTypeTicketDetails($id)
-    // {
-    //     $type_ticket = TypeTickets::with(['ticket'])->find($id);
-
-    //     if ($type_ticket) {
-    //         return response()->json([
-    //             'type_ticket' => [
-    //                 'id' => $type_ticket->id,
-    //                 'name' => $type_ticket->name,
-    //                 'created_at' => $type_ticket->created_at,
-    //                 'updated_at' => $type_ticket->updated_at,
-    //             ],
-    //             'tickets' => $type_ticket->tickets->map(function ($ticket) {
-    //                 return [
-    //                     'id' => $ticket->id,
-    //                     'name' => $ticket->name,
-    //                     'quantity' => $ticket->quantity,
-    //                     'price' => $ticket->price,
-    //                     'created_at' => $ticket->created_at,
-    //                     'updated_at' => $ticket->updated_at,
-    //                     'deleted_at' => $ticket->deleted_at,
-    //                 ];
-    //             }),
-    //         ]);
-    //     }
-
-    //     return response()->json([
-    //         'message' => 'TypeTicket not found'
-    //     ], 404);
-    // }
-
-    // public function showTypeTicketOrders($id)
-    // {
-    //     $type_ticket = TypeTickets::with('orders')->find($id);
-
-    //     if ($type_ticket) {
-    //         return response()->json([
-    //             'type_ticket' => [
-    //                 'id' => $type_ticket->id,
-    //                 'name' => $type_ticket->name,
-    //                 'created_at' => $type_ticket->created_at,
-    //                 'updated_at' => $type_ticket->updated_at,
-    //             ],
-    //             'orders' => $type_ticket->orders->map(function ($order) {
-    //                 return [
-    //                     'id' => $order->id,
-    //                     'name' => $order->name,
-    //                     'created_at' => $order->created_at,
-    //                     'updated_at' => $order->updated_at,
-    //                 ];
-    //             }),
-    //         ]);
-    //     }
-
-    //     return response()->json([
-    //         'message' => 'TypeTicket not found'
-    //     ], 404);
-    // }
 
     public function updateTypeTickets(Request $request, $id)
     {
@@ -130,7 +70,7 @@ class TypeTicketsController extends Controller
 
         return response()->json([
             'message' => 'TypeTicket updated successfully',
-            'type_ticket' => $type_ticket
+            'data' => $type_ticket
         ], 200);
     }
 

@@ -16,7 +16,7 @@ class RolesController extends Controller
                 'message' => 'Roles not found'
             ], 404);
         }
-        return response()->json($roles, 200);
+        return response()->json(['data' => $roles], 200);
     }
 
     public function getRolesById($id)
@@ -29,6 +29,6 @@ class RolesController extends Controller
             ], 404);
         }
 
-        return response()->json($roles, 200);
+        return response()->json(['data' => $roles], 200);
     }
 }

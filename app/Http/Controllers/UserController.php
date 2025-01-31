@@ -82,7 +82,7 @@ class UserController extends Controller
 
         if (!$authorizationHeader) {
             return response()->json([
-               'error' => 'Authorization header missing'
+               'message' => 'Authorization header missing'
             ], 401);
         }
 
@@ -93,14 +93,14 @@ class UserController extends Controller
 
             if (!$user) {
                 return response()->json([
-                    'error' => 'Invalid token or user not found',
+                    'message' => 'Invalid token or user not found',
                 ], 401);
             }
             $userData = User::where('email', $user->email)->with('role')->first();
 
             if (!$userData) {
                 return response()->json([
-                    'error' => 'User not found in database',
+                    'message' => 'User not found in database',
                 ], 404);
             }
 
@@ -114,27 +114,12 @@ class UserController extends Controller
 
         }catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to decode token',
-                'message' => $e->getMessage()
+                'message' => 'Failed to decode token',
+                'error' => $e->getMessage()
             ], 401);
         }
     }
 
-    // public function getUsersById($id)
-    // {
-    //     $user = User::findOrFail($id);
-
-    //     if (!$user) {
-    //         return response()->json([
-    //             'message' => 'User not found'
-    //         ], 404);
-    //     }
-
-    //     return response()->json($user, 200);
-
-    // }
-
-    
     public function updateProfile(Request $request)
     {
         $user = Auth::guard('sanctum')->user();

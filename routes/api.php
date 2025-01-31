@@ -48,31 +48,29 @@ Route::prefix('/api')->group(function () {
 
     Route::prefix('events')->group(function () {
         Route::get('/', [EventController::class, 'getAllEvents']);
-        Route::get('/{id}', [EventController::class, 'getEventsById']);
+        Route::get('/{id}', [EventController::class, 'getEventsDetails']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [EventController::class, 'createEvents']);
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
-            Route::get('/{id}/events', [UserController::class, 'getEventsByOrganizer']);
+            Route::get('/{id}/events_organizer', [UserController::class, 'getEventsByOrganizer']);
         });
-        Route::get('/{id}/categories', [EventController::class, 'getCategories']);
     });
 
     Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoryController::class, 'getCategories']);
-        Route::post('/', [CategoryController::class, 'createCatergories']);
+        Route::get('/', [CategoryController::class, 'getAllCategories']);
         Route::get('/{id}', [CategoryController::class, 'getCategoriesById']);
-        Route::patch('/{id}', [CategoryController::class, 'updateCategories']);
-        Route::delete('/{id}', [CategoryController::class, 'destroyCategories']);
-        Route::post('/{id}/events', [CategoryController::class, 'attachEvent']);
-        Route::get('/{id}/events', [CategoryController::class, 'getEvents']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', [CategoryController::class, 'createCatergories']);
+            Route::patch('/{id}', [CategoryController::class, 'updateCategories']);
+            Route::delete('/{id}', [CategoryController::class, 'destroyCategories']);
+        });
     });
 
     Route::prefix('type-tickets')->group(function () {
         Route::get('/', [TypeTicketsController::class, 'getTypeTickets']);
         Route::post('/', [TypeTicketsController::class, 'createTypeTickets']);
         Route::get('/{id}', [TypeTicketsController::class, 'getTypeTicketsById']);
-        // Route::get('/{id}/tickets', [TypeTicketsController::class, 'showTypeTicketDetails']);
         Route::patch('/{id}', [TypeTicketsController::class, 'updateTypeTickets']);
         Route::delete('/{id}', [TypeTicketsController::class, 'destroyTypeTickets']);
     });

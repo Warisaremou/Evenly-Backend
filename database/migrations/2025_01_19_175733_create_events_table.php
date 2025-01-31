@@ -15,7 +15,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('cover');
             $table->string('title');
-            $table->dateTime('date_time');
+            $table->date('date');
+            $table->time('time');
             $table->string('location');
             $table->text('description');
             $table->uuid('user_id');

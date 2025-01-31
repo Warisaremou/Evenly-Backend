@@ -17,7 +17,7 @@ class OrdersController extends Controller
             ], 404);
         }
 
-        return response()->json($orders, 200);
+        return response()->json(['data' => $orders], 200);
     }
 
     public function createOrders(Request $request)
@@ -36,7 +36,7 @@ class OrdersController extends Controller
 
         return response()->json([
             'message' => 'Order created successfully',
-            'order' => $order
+            'data' => $order
         ], 201);
     }
 
@@ -50,7 +50,7 @@ class OrdersController extends Controller
             ], 404);
         }
 
-        return response()->json($order, 200);
+        return response()->json(['data' => $order], 200);
     }
 
     public function updateOrders(Request $request, $id)
@@ -76,7 +76,7 @@ class OrdersController extends Controller
 
         return response()->json([
             'message' => 'Order updated successfully',
-            'order' => $order
+            'data' => $order
         ], 200);
     }
 

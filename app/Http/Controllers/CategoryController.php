@@ -3,41 +3,82 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categories;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
-    public function getCategories()
+    public function __construct()
     {
-        $categories = Categories::all();
+        $this->middleware('auth:sanctum', ['except' => ['getAllCategories', 'getCategoriesById']]);
+    }
 
-        if ($categories->isEmpty()) {
-            return response()->json([
-                'message' => 'Categories not found'
-            ], 404);
-        }
-        return response()->json($categories, 200);
+    public function getAllCategories()
+    {
+        $categories = Categories::with('events')->get();
+
+        return response()->json([
+            'data' => $categories->map(function ($category) {
+                return [
+                    'name' => $category->name,
+                    'created_at' => $category->created_at,
+                    'updated_at' => $category->updated_at,
+                    'categories' => $category->events->map(function ($event) {
+                        return [
+                            'cover' => $event->cover,
+                            'title' => $event->title,
+                            'date' => $event->date,
+                            'time' => $event->time,
+                            'location' => $event->location,
+                            'description' => $event->description,
+                            'created_at' => $event->created_at,
+                            'updated_at' => $event->updated_at,
+                        ];
+                    }),
+                ];
+            }),
+        ], 200);
+    
     }
 
     public function createCatergories(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        try {
+            $user = Auth::guard('sanctum')->user();
 
-        $category = Categories::create([
-            'name' => $validated['name'],
-        ]);
+            if (!$user || $user->role->name !== 'organizer') {
+                return response()->json([
+                    'message' => 'Only organizers can add categories.',
+                ], 403);
+            }
 
-        return response()->json([
-            'message' => 'Category created successfully',
-            'category' => $category
-        ], 201);
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'events' => 'required|array',
+                'events.*' => 'exists:events,id'
+            ]);
+
+            $category = Categories::create(['name' => $validated['name']]);
+
+            collect($validated['events'])->map(function ($eventId) use ($category) {
+                $category->events()->attach($eventId);
+            });
+
+            return response()->json([
+                'message' => 'Category added successfully',
+                'data' => $category
+            ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
+        }
     }
 
     public function getCategoriesById($id)
     {
-        $category = Categories::findOrFail($id);
+        $category = Categories::with('events')->find($id);
 
         if (!$category) {
             return response()->json([
@@ -45,35 +86,77 @@ class CategoryController extends Controller
             ], 404);
         }
 
-        return response()->json($category, 200);
+        return response()->json([
+            'data' => [
+                'name' => $category->name,
+                'created_at' => $category->created_at,
+                'updated_at' => $category->updated_at,
+                'categories' => $category->events->map(function ($event) {
+                    return [
+                        'cover' => $event->cover,
+                        'title' => $event->title,
+                        'date' => $event->date,
+                        'time' => $event->time,
+                        'location' => $event->location,
+                        'description' => $event->description,
+                        'created_at' => $event->created_at,
+                        'updated_at' => $event->updated_at,
+                    ];
+                }),
+            ],
+        ], 200);
     }
 
     public function updateCategories(Request $request, $id)
     {
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $category = Categories::findOrFail($id);
-
-        if (!$category) {
-            return response()->json([
-                'message' => 'Category not found'
-            ], 404);
-        }
+        try {
+            $user = Auth::guard('sanctum')->user();
         
-        $category->name = $validated['name'];
-        $category->save();
+            if (!$user || $user->role->name !== 'organizer') {
+                return response()->json([
+                    'message' => 'Only organizers can update categories.',
+                ], 403);
+            }
 
-        return response()->json([
-            'message' => 'Category updated successfully',
-            'category' => $category
-        ], 200);
+            $category = Categories::findOrFail($id);
+
+            if (!$category) {
+                return response()->json([
+                    'message' => 'Category not found'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'events' => 'required|array',
+                'events.*' => 'exists:events,id'
+            ]);
+        
+            $category->name = $validated['name'];
+            $category->events()->sync($validated['events']);
+            $category->save();
+
+            return response()->json([
+                'message' => 'Category updated successfully',
+                'data' => $category
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroyCategories($id)
     {
+        $user = Auth::guard('sanctum')->user();
+        
+        if (!$user || $user->role->name !== 'organizer') {
+            return response()->json([
+                'message' => 'Only organizers can delete categories.',
+            ], 403);
+        }
+
         $category = Categories::findOrFail($id);
 
         if (!$category) {
@@ -86,55 +169,6 @@ class CategoryController extends Controller
 
         return response()->json([
             'message' => 'Category deleted successfully'
-        ], 200);
-    }
-
-    public function attachEvent(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'events' => 'required|array',
-            'events.*' => 'exists:events,id',
-        ]);
-
-        $category = Categories::findOrFail($id);
-
-        if (!$category) {
-            return response()->json([
-                'message' => 'Category not found'
-            ], 404);
-        }
-
-        $category->events()->attach($validated['events']);
-
-        return response()->json([
-            'message' => 'Event attached to category successfully',
-            // 'category' => $category->load('events')
-        ], 200);
-    }
-
-    public function getEvents($id)
-    {
-        $category = Categories::with('events')->findOrFail($id);
-
-        if (!$category) {
-            return response()->json([
-                'message' => 'Category not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'events' => $category->events->map(function ($event) {
-                return [
-                    'id' => $event->id,
-                    'picture' => $event->picture,
-                    'title' => $event->title,
-                    'date_time' => $event->date_time,
-                    'location' => $event->location,
-                    'description' => $event->description,
-                    'created_at' => $event->created_at,
-                    'updated_at' => $event->updated_at,
-                ];
-            }),
         ], 200);
     }
 }
