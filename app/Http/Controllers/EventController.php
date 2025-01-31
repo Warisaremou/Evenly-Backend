@@ -7,6 +7,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
@@ -127,6 +128,13 @@ class EventController extends Controller
 
     public function updateEvents(Request $request, $id)
     {
+        dd([
+            'all_data' => $request->all(),
+            'json' => $request->json()->all(),
+            'input' => $request->input(),
+            'files' => $request->file()
+        ]);
+
         try{
             $user = Auth::guard('sanctum')->user();
         
@@ -150,15 +158,20 @@ class EventController extends Controller
                 ], 403);
             }
 
+            if (!$request->all()) {
+                return response()->json([
+                    'message' => 'Request is empty. Make sure you are sending valid JSON or form-data.'
+                ], 400);
+            }
 
             $validated = $request->validate([
-                'cover' => 'required|image|mimes:jpeg,png,jpg,gif|max:2000',
-                'title' => 'required|string|max:255',
-                'date' => 'required|date_format:Y-m-d',
-                'time' => 'required|date_format:H:i',
-                'location' => 'required|string|max:255',
-                'description' => 'required|string',
-                'categories' => 'required|array',
+                // 'cover' => 'nullable|mimes:jpeg,png,jpg,gif|max:2000',
+                'title' => 'string|max:255',
+                'date' => 'date_format:Y-m-d',
+                'time' => 'date_format:H:i',
+                'location' => 'string|max:255',
+                'description' => 'string',
+                'categories' => 'array',
                 'categories.*' => 'exists:categories,id'
             ]);
             
@@ -167,7 +180,7 @@ class EventController extends Controller
                 $event->cover = $uploadedCoverUrl;
             }
 
-            $event->cover = $validated['cover'] ?? $event->cover;
+            // $event->cover = $validated['cover'] ?? $event->cover;
             $event->title = $validated['title'];
             $event->date = $validated['date'];
             $event->time = $validated['time'];
@@ -184,9 +197,12 @@ class EventController extends Controller
             ], 200);
         }catch (Exception $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                // 'errors' => $e,
+                // 'req' => $request
             ], 500);
         }
+        // dd($request->all());
     }
 
     public function destroyEvents(Request $request, $id)
