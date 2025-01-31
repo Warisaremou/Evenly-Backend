@@ -3,41 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tickets;
-use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 
 class TicketsController extends Controller
 {
     public function getTickets()
     {
-        $tickets = Tickets::paginate(10);
+        // $tickets = Tickets::paginate(10);
+        $tickets = Tickets::all();
         return response()->json($tickets, 200);
     }
 
-    public function createTickets(Request $request)
+    public function addTickets(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'required|numeric',
-            'price' => 'required|numeric',
-            'user_id' => 'required|uuid|exists:users,id',
-            'event_id' => 'required|uuid|exists:events,id',
-            'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
-        ]);
+        try {
 
-        $ticket = Tickets::create([
-            'name' => $validated['name'],
-            'quantity' => $validated['quantity'],
-            'price' => $validated['price'],
-            'user_id' => $validated['user_id'],
-            'event_id' => $validated['event_id'],
-            'type_ticket_id' => $validated['type_ticket_id'],
-        ]);
+            if ($request->user()->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can add tickets.',
+                ], 403);
+            }
 
-        return response()->json([
-            'message' => 'Ticket created successfully',
-            'ticket' => $ticket
-        ], 201);
+            $id = $request->user()->id;
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'quantity' => 'required|numeric',
+                'price' => 'required|numeric',
+                'event_id' => 'required|uuid|exists:events,id',
+                'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
+            ]);
+
+            $ticket = Tickets::create([
+                'name' => $validated['name'],
+                'quantity' => $validated['quantity'],
+                'price' => $validated['price'],
+                'user_id' => $id,
+                'event_id' => $validated['event_id'],
+                'type_ticket_id' => $validated['type_ticket_id'],
+            ]);
+
+            return response()->json([
+                'message' => 'Ticket added successfully',
+                'data' => $ticket
+            ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
+        }
     }
 
 
@@ -54,90 +69,117 @@ class TicketsController extends Controller
         return response()->json($ticket, 200);
     }
 
-    public function getTicketsByUser($id)
+    public function getTicketsByOrganizer(Request $request)
     {
-        $user = User::with('tickets')->find($id);
+        try {
 
-        if ($user) {
+            if ($request->user()->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can create events.',
+                ], 403);
+            }
+
+            $id = $request->user()->id;
+            $organizerTickets = Tickets::where('user_id', $id)->get();
+
+            return response()->json(
+                $organizerTickets,
+                200
+            );
+        } catch (Exception $e) {
             return response()->json([
-                'user' => [
-                    'id' => $user->id,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'organizer_name' => $user->organizer_name,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                ],
-                'tickets' => $user->tickets->map(function ($ticket) {
-                    return [
-                        'id' => $ticket->id,
-                        'name' => $ticket->name,
-                        'quantity' => $ticket->quantity,
-                        'price' => $ticket->price,
-                        'event_id' => $ticket->event_id,
-                        'type_ticket_id' => $ticket->type_ticket_id,
-                        'created_at' => $ticket->created_at,
-                        'updated_at' => $ticket->updated_at,
-                    ];
-                }),
-            ], 200);
+                'message' => $e->getMessage()
+            ],  500);
         }
-
-        return response()->json([
-            'message' => 'User not found'
-        ], 404);
     }
 
     public function updateTickets(Request $request, $id)
     {
+        try {
+            if ($request->user()->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can add tickets.',
+                ], 403);
+            }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'required|numeric',
-            'price' => 'required|numeric',
-            'user_id' => 'required|uuid|exists:users,id',
-            'event_id' => 'required|uuid|exists:events,id',
-            'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
-        ]);
+            $userID = $request->user()->id;
 
-        $ticket = Tickets::findOrFail($id);
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'quantity' => 'required|numeric',
+                'price' => 'required|numeric',
+                'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
+            ]);
 
-        if (!$ticket) {
+            $ticket = Tickets::findOrFail($id);
+
+            if (!$ticket) {
+                return response()->json([
+                    'message' => 'Ticket not found'
+                ], 404);
+            }
+
+            $isTicketOwner = Tickets::where('user_id', $userID)->firstOrFail();
+
+            if (!$isTicketOwner) {
+                return response()->json([
+                    'message' => 'Only ticket owner can update ticket',
+                ], 403);
+            };
+
+            // Update Ticket
+            $ticket->name = $validated['name'];
+            $ticket->quantity = $validated['quantity'];
+            $ticket->price = $validated['price'];
+            $ticket->type_ticket_id = $validated['type_ticket_id'];
+            $ticket->save();
+
             return response()->json([
-                'message' => 'Ticket not found'
-            ], 404);
+                'message' => 'Ticket updated successfully',
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
         }
-
-        $ticket->name = $validated['name'];
-        $ticket->quantity = $validated['quantity'];
-        $ticket->price = $validated['price'];
-        $ticket->user_id = $validated['user_id'];
-        $ticket->event_id = $validated['event_id'];
-        $ticket->type_ticket_id = $validated['type_ticket_id'];
-        $ticket->save();
-
-        return response()->json([
-            'message' => 'Ticket updated successfully',
-            'ticket' => $ticket,
-        ], 200);
     }
 
-    public function destroyTickets($id)
+    public function removeTicket(Request $request, $id)
     {
-        $ticket = Tickets::findOrFail($id);
+        try {
+            if ($request->user()->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can add tickets.',
+                ], 403);
+            }
 
-        if (!$ticket) {
+            $userID = $request->user()->id;
+
+            $ticket = Tickets::findOrFail($id);
+
+            if (!$ticket) {
+                return response()->json([
+                    'message' => 'Ticket not found'
+                ], 404);
+            }
+
+            $isTicketOwner = Tickets::where('user_id', $userID)->firstOrFail();
+
+            if (!$isTicketOwner) {
+                return response()->json([
+                    'message' => 'Only ticket owner can remove ticket',
+                ], 403);
+            };
+
+            $ticket->delete();
+
             return response()->json([
-                'message' => 'Ticket not found'
-            ], 404);
+                'message' => 'Ticket deleted successfully',
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
         }
-
-        $ticket->delete();
-
-        return response()->json([
-            'message' => 'Ticket deleted successfully',
-        ], 200);
     }
 }
