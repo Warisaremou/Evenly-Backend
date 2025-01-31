@@ -12,13 +12,18 @@ class Orders extends Model
 
     protected $fillable = [
         'user_id',
+        'ticket_id',
         'is_canceled',
-        'is_expired',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function ticket(): BelongsTo
+    {
+        return $this->belongsTo(Tickets::class);
     }
 
 }
