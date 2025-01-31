@@ -20,27 +20,25 @@ class EventController extends Controller
     {
         $events = Events::with('categories')->get();
 
-        return response()->json([
-            'data' => $events->map(function ($event) {
-                return [
-                    'cover' => $event->cover,
-                    'title' => $event->title,
-                    'date' => $event->date,
-                    'time' => $event->time,
-                    'location' => $event->location,
-                    'description' => $event->description,
-                    'created_at' => $event->created_at,
-                    'updated_at' => $event->updated_at,
-                    'categories' => $event->categories->map(function ($category) {
-                        return [
-                            'name' => $category->name,
-                            'created_at' => $category->created_at,
-                            'updated_at' => $category->updated_at,
-                        ];
-                    }),
-                ];
-            }),
-        ], 200);
+        return response()->json($events->map(function ($event) {
+            return [
+                'cover' => $event->cover,
+                'title' => $event->title,
+                'date' => $event->date,
+                'time' => $event->time,
+                'location' => $event->location,
+                'description' => $event->description,
+                'created_at' => $event->created_at,
+                'updated_at' => $event->updated_at,
+                'categories' => $event->categories->map(function ($category) {
+                    return [
+                        'name' => $category->name,
+                        'created_at' => $category->created_at,
+                        'updated_at' => $category->updated_at,
+                    ];
+                }),
+            ];
+        }), 200);
     }
 
     public function createEvents(Request $request)
@@ -135,9 +133,9 @@ class EventController extends Controller
             'files' => $request->file()
         ]);
 
-        try{
+        try {
             $user = Auth::guard('sanctum')->user();
-        
+
             if (!$user || $user->role->name !== 'organizer') {
                 return response()->json([
                     'error' => 'Only organizers can update events.',
@@ -152,7 +150,7 @@ class EventController extends Controller
                 ], 404);
             }
 
-            if ($event->user_id !== $user->id ) {
+            if ($event->user_id !== $user->id) {
                 return response()->json([
                     'message' => "Only event owner is authorized",
                 ], 403);
@@ -174,7 +172,7 @@ class EventController extends Controller
                 'categories' => 'array',
                 'categories.*' => 'exists:categories,id'
             ]);
-            
+
             if ($request->hasFile('cover')) {
                 $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
                 $event->cover = $uploadedCoverUrl;
@@ -195,7 +193,7 @@ class EventController extends Controller
                 'message' => 'Event updated successfully',
                 'data' => $event
             ], 200);
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
                 // 'errors' => $e,
@@ -208,13 +206,13 @@ class EventController extends Controller
     public function destroyEvents(Request $request, $id)
     {
         $user = Auth::guard('sanctum')->user();
-        
+
         if (!$user || $user->role->name !== 'organizer') {
             return response()->json([
                 'message' => 'Only organizers can delete events.',
             ], 403);
         }
-        
+
         $event = Events::findOrFail($id);
 
         if (!$event) {
@@ -270,6 +268,5 @@ class EventController extends Controller
                 ];
             }),
         ], 200);
-
     }
 }
