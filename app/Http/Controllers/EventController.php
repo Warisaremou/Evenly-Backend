@@ -22,6 +22,7 @@ class EventController extends Controller
 
         return response()->json($events->map(function ($event) {
             return [
+                'id' => $event->id,
                 'cover' => $event->cover,
                 'title' => $event->title,
                 'date' => $event->date,
@@ -103,24 +104,23 @@ class EventController extends Controller
         }
 
         return response()->json([
-            'data' => [
-                'cover' => $event->cover,
-                'title' => $event->title,
-                'date' => $event->date,
-                'time' => $event->time,
-                'location' => $event->location,
-                'description' => $event->description,
-                'created_at' => $event->created_at,
-                'updated_at' => $event->updated_at,
-                'organizer_name' => $event->user->organizer_name,
-                'categories' => $event->categories->map(function ($category) {
-                    return [
-                        'name' => $category->name,
-                        'created_at' => $category->created_at,
-                        'updated_at' => $category->updated_at,
-                    ];
-                }),
-            ],
+            'cover' => $event->cover,
+            'title' => $event->title,
+            'date' => $event->date,
+            'time' => $event->time,
+            'location' => $event->location,
+            'description' => $event->description,
+            'created_at' => $event->created_at,
+            'updated_at' => $event->updated_at,
+            'organizer_name' => $event->user->organizer_name,
+            'categories' => $event->categories->map(function ($category) {
+                return [
+                    'name' => $category->name,
+                    'created_at' => $category->created_at,
+                    'updated_at' => $category->updated_at,
+                ];
+            }),
+
         ], 200);;
     }
 

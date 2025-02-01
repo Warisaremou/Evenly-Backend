@@ -80,6 +80,7 @@ Route::prefix('/api')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', 'addTickets');
             Route::get('/organizer/tickets', 'getTicketsByOrganizer');
+            Route::get('/event/{id}', 'getTicketsByEvent');
             Route::patch('/{id}', 'updateTickets');
             Route::delete('/{id}', 'removeTicket');
         });
