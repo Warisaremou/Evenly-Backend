@@ -34,4 +34,9 @@ class Tickets extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function orders() : HasMany
+    {
+        return $this->hasMany(Orders::class);
+    }
 }

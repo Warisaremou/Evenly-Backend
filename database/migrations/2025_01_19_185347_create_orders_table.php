@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id');
+            $table->uuid('ticket_id');
             $table->boolean('is_canceled')->default(false);
-            $table->boolean('is_expired')->default(false);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('ticket_id')->references('id')->on('tickets')->onDelete('cascade');
         });
     }
 
