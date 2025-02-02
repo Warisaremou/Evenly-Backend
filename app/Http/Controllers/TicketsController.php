@@ -75,7 +75,7 @@ class TicketsController extends Controller
 
             if ($request->user()->role->name !== 'organizer') {
                 return response()->json([
-                    'error' => 'Only organizers can create events.',
+                    'error' => 'Only organizers can view tickets.',
                 ], 403);
             }
 

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use Exception;
 
 class UserController extends Controller
 {
@@ -73,6 +74,30 @@ class UserController extends Controller
         return response()->json([
             'message' => 'User logged in successfully',
             'token' => $token->plainTextToken
+        ], 200);
+    }
+
+    public function logOut(Request $request)
+    {
+        $user = Auth::guard('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        try{
+            $user->tokens->each(function ($token) {
+                $token->delete();
+            });
+        }catch(Exception $e){
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
+        }
+        return response()->json([
+            'message' => 'User logged out successfully'
         ], 200);
     }
 

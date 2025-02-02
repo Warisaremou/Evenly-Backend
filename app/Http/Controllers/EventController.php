@@ -94,7 +94,7 @@ class EventController extends Controller
 
     public function getEventsDetails($id)
     {
-        $event = Events::with(['categories', 'user'])->find($id);
+        $event = Events::with(['categories', 'user', 'tickets'])->find($id);
 
         if (!$event) {
             return response()->json([
@@ -120,8 +120,17 @@ class EventController extends Controller
                         'updated_at' => $category->updated_at,
                     ];
                 }),
+                'tickets' => $event->tickets->map(function ($ticket) {
+                return [
+                    'name' => $ticket->name,
+                    'quantity' => $ticket->quantity,
+                    'price' => $ticket->price,
+                    'created_at' => $ticket->created_at,
+                    'updated_at' => $ticket->updated_at,
+                ];
+            }),
             ],
-        ], 200);;
+        ], 200);
     }
 
     public function updateEvents(Request $request, $id)
