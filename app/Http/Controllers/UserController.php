@@ -79,26 +79,27 @@ class UserController extends Controller
 
     public function logOut(Request $request)
     {
-        $user = Auth::guard('sanctum')->user();
+        try {
+            $user = Auth::guard('sanctum')->user();
 
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not authenticated'
-            ], 401);
-        }
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Account not found'
+                ], 404);
+            }
 
-        try{
             $user->tokens->each(function ($token) {
                 $token->delete();
             });
-        }catch(Exception $e){
+
+            return response()->json([
+                'message' => 'Log out successfully'
+            ], 200);
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
             ],  500);
         }
-        return response()->json([
-            'message' => 'User logged out successfully'
-        ], 200);
     }
 
     public function getProfile(Request $request)
