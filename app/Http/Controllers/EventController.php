@@ -95,7 +95,7 @@ class EventController extends Controller
 
     public function getEventsDetails($id)
     {
-        $event = Events::with(['categories', 'user'])->find($id);
+        $event = Events::with(['categories', 'user', 'tickets'])->find($id);
 
         if (!$event) {
             return response()->json([

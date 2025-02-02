@@ -43,6 +43,7 @@ Route::prefix('/api')->group(function () {
             Route::get('/profile', [UserController::class, 'getProfile']);
             Route::put('/profile', [UserController::class, 'updateProfile']);
             Route::delete('/profile', [UserController::class, 'deleteProfile']);
+            Route::post('/logOut', [UserController::class, 'logOut']);
         });
     });
 
@@ -88,9 +89,12 @@ Route::prefix('/api')->group(function () {
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrdersController::class, 'getOrders']);
-        Route::post('/', [OrdersController::class, 'createOrders']);
-        Route::get('/{id}', [OrdersController::class, 'getOrdersById']);
-        Route::put('/{id}', [OrdersController::class, 'updateOrders']);
-        Route::delete('/{id}', [OrdersController::class, 'destroyOrders']);
+        // Route::get('/{id}', [OrdersController::class, 'getOrdersById']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', [OrdersController::class, 'createOrders']);
+            Route::get('/user/Allorders', [OrdersController::class, 'getOrdersByUser']);
+            Route::patch('/{id}/cancel', [OrdersController::class, 'cancelOrders']);
+            Route::delete('/{id}', [OrdersController::class, 'destroyOrders']);
+        });
     });
 });
