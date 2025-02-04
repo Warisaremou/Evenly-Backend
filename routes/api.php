@@ -30,7 +30,6 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('/api')->group(function () {
     Route::prefix('roles')->group(function () {
         Route::get('/', [RolesController::class, 'getRoles']);
-        // Route::post('/', [RolesController::class, 'createRoles']);
         Route::get('/{id}', [RolesController::class, 'getRolesById']);
         Route::put('/{id}', [RolesController::class, 'updateRoles']);
         Route::delete('/{id}', [RolesController::class, 'destroyRoles']);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\OrderMail;
 use App\Models\Orders;
 use App\Models\Tickets;
+use Barryvdh\DomPDF\PDF;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,11 +74,10 @@ class OrdersController extends Controller
                 'lastname' => $user->lastname,
             ];
 
-            if (!view()->exists('emails.test-order')) {
-                return response()->json(['message' => 'La vue emails.test-order est introuvable !'], 500);
-            }
+            $pdf = app(PDF::class);
+            $pdf->loadView('emails.order-pdf', $orderDetails);
 
-            Mail::to($user->email)->queue(new OrderMail($orderDetails));
+            Mail::to($user->email)->queue(new OrderMail($orderDetails))->attachData($pdf->output(), "text.pdf");
             
             return response()->json([
                 'message' => 'Order successfully done. An email will be sent to you now!',
