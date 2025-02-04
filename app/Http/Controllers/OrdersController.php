@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderMail;
 use App\Models\Orders;
 use App\Models\Tickets;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class OrdersController extends Controller
 {
@@ -48,33 +51,41 @@ class OrdersController extends Controller
                 ], 400);
             }
 
-            $order = Orders::create([
+            $orderList = array_map(fn () => Orders::create([
                 'user_id' => $user->id,
                 'ticket_id' => $validated['ticket_id'],
                 'is_canceled' => false
-            ]);
-
-            $ticket->quantity -= $validated['quantity'];
-            $ticket->save();
-
+            ]), range(1, $validated['quantity']));
+           
+            $ticket->decrement('quantity', $validated['quantity']);
+            
             $updatedTicket = Tickets::find($ticket->id); 
 
+            $orderDetails = [
+                'event_name' => $updatedTicket->event->title,
+                'date' => $updatedTicket->event->date,
+                'time' => $updatedTicket->event->time,
+                'location' => $updatedTicket->event->location,
+                'ticket_name' => $updatedTicket->name,
+                'price' => $updatedTicket->price,
+                'type_ticket' => $updatedTicket->type_ticket->name,
+                'firstname' => $user->firstname,
+                'lastname' => $user->lastname,
+            ];
+
+            if (!view()->exists('emails.test-order')) {
+                return response()->json(['message' => 'La vue emails.test-order est introuvable !'], 500);
+            }
+
+            Mail::to($user->email)->queue(new OrderMail($orderDetails));
+            
             return response()->json([
-                'data' => [
-                    'order_id' => $order->id,
-                    'user_id' => $user->id,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'email' => $user->email,
-                    'ticket_id' => $updatedTicket->id,
-                    'ticket_name' => $updatedTicket->name,
-                    'remaining_quantity' => $updatedTicket->quantity,
-                    'ticket_price' => $updatedTicket->price,
-                    'event_id' => $updatedTicket->event->id,
-                    'type_ticket' => $updatedTicket->type_ticket->name,
-                    'ordered_quantity' => $validated['quantity']
-                ]
+                'message' => 'Order successfully done. An email will be sent to you now!',
+                'orderList' => $orderList,
+                'orderDetails' => $orderDetails
             ], 201);
+
+
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
