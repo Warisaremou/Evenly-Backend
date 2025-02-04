@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Events;
+use App\Models\Tickets;
+use App\Models\TypeTickets;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -94,32 +96,52 @@ class EventController extends Controller
 
     public function getEventsDetails($id)
     {
-        $event = Events::with(['categories', 'user'])->find($id);
+        try {
+            $event = Events::with(['categories'])->findOrFail($id);
+            if (!$event) {
+                return response()->json([
+                    'message' => 'Event not found',
+                ], 404);
+            }
+            $eventTickets = Tickets::addSelect([
+                'ticket_type_name' => TypeTickets::select('name')
+                    ->whereColumn('id', 'tickets.type_ticket_id')
+                    ->limit(1)
+            ])->where('event_id', $id)->get();
 
-        if (!$event) {
             return response()->json([
-                'message' => 'Événement non trouvé'
-            ], 404);
+                'cover' => $event->cover,
+                'title' => $event->title,
+                'date' => $event->date,
+                'time' => $event->time,
+                'location' => $event->location,
+                'description' => $event->description,
+                'created_at' => $event->created_at,
+                'updated_at' => $event->updated_at,
+                'organizer_name' => $event->user->organizer_name,
+                'categories' => $event->categories->map(function ($category) {
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                    ];
+                }),
+                'tickets' => $eventTickets->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'name' => $ticket->name,
+                        'price' => $ticket->price,
+                        'ticket_type_name' =>
+                        $ticket->ticket_type_name,
+                        'quantity' => $ticket->quantity
+                    ];
+                }),
+
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
         }
-
-        return response()->json([
-            'cover' => $event->cover,
-            'title' => $event->title,
-            'date' => $event->date,
-            'time' => $event->time,
-            'location' => $event->location,
-            'description' => $event->description,
-            'created_at' => $event->created_at,
-            'updated_at' => $event->updated_at,
-            'organizer_name' => $event->user->organizer_name,
-            'categories' => $event->categories->map(function ($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                ];
-            }),
-
-        ], 200);;
     }
 
     public function updateEvents(Request $request, $id)
