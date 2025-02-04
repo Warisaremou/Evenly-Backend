@@ -75,7 +75,7 @@ class TicketsController extends Controller
 
             if ($request->user()->role->name !== 'organizer') {
                 return response()->json([
-                    'error' => 'Only organizers can view tickets.',
+                    'error' => 'Only organizers can access their tickets.',
                 ], 403);
             }
 
@@ -84,6 +84,29 @@ class TicketsController extends Controller
 
             return response()->json(
                 $organizerTickets,
+                200
+            );
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
+        }
+    }
+
+    public function getTicketsByEvent(Request $request, $id)
+    {
+        try {
+
+            if ($request->user()->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can access their event tickets.',
+                ], 403);
+            }
+
+            $eventTickets = Tickets::where('event_id', $id)->get();
+
+            return response()->json(
+                $eventTickets,
                 200
             );
         } catch (Exception $e) {

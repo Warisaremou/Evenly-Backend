@@ -11,13 +11,7 @@ class TypeTicketsController extends Controller
     {
         $type_tickets = TypeTickets::all();
 
-        if ($type_tickets->isEmpty()) {
-            return response()->json([
-                'message' => 'TypeTickets not found'
-            ], 404);
-        }
-
-        return response()->json(['data' => $type_tickets], 200);
+        return response()->json($type_tickets, 200);
     }
 
     public function createTypeTickets(Request $request)
@@ -37,7 +31,7 @@ class TypeTicketsController extends Controller
     }
 
     public function getTypeTicketsById($id)
-    { 
+    {
         $type_ticket = TypeTickets::findOrFail($id);
 
         if (!$type_ticket) {
@@ -64,7 +58,7 @@ class TypeTicketsController extends Controller
                 'message' => 'TypeTicket not found'
             ], 404);
         }
-        
+
         $type_ticket->name = $validated['name'];
         $type_ticket->save();
 

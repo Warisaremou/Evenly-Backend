@@ -22,6 +22,7 @@ class EventController extends Controller
 
         return response()->json($events->map(function ($event) {
             return [
+                'id' => $event->id,
                 'cover' => $event->cover,
                 'title' => $event->title,
                 'date' => $event->date,
@@ -32,9 +33,8 @@ class EventController extends Controller
                 'updated_at' => $event->updated_at,
                 'categories' => $event->categories->map(function ($category) {
                     return [
+                        'id' => $category->id,
                         'name' => $category->name,
-                        'created_at' => $category->created_at,
-                        'updated_at' => $category->updated_at,
                     ];
                 }),
             ];
@@ -94,7 +94,7 @@ class EventController extends Controller
 
     public function getEventsDetails($id)
     {
-        $event = Events::with(['categories', 'user', 'tickets'])->find($id);
+        $event = Events::with(['categories', 'user'])->find($id);
 
         if (!$event) {
             return response()->json([
@@ -103,34 +103,23 @@ class EventController extends Controller
         }
 
         return response()->json([
-            'data' => [
-                'cover' => $event->cover,
-                'title' => $event->title,
-                'date' => $event->date,
-                'time' => $event->time,
-                'location' => $event->location,
-                'description' => $event->description,
-                'created_at' => $event->created_at,
-                'updated_at' => $event->updated_at,
-                'organizer_name' => $event->user->organizer_name,
-                'categories' => $event->categories->map(function ($category) {
-                    return [
-                        'name' => $category->name,
-                        'created_at' => $category->created_at,
-                        'updated_at' => $category->updated_at,
-                    ];
-                }),
-                'tickets' => $event->tickets->map(function ($ticket) {
+            'cover' => $event->cover,
+            'title' => $event->title,
+            'date' => $event->date,
+            'time' => $event->time,
+            'location' => $event->location,
+            'description' => $event->description,
+            'created_at' => $event->created_at,
+            'updated_at' => $event->updated_at,
+            'organizer_name' => $event->user->organizer_name,
+            'categories' => $event->categories->map(function ($category) {
                 return [
-                    'name' => $ticket->name,
-                    'quantity' => $ticket->quantity,
-                    'price' => $ticket->price,
-                    'created_at' => $ticket->created_at,
-                    'updated_at' => $ticket->updated_at,
+                    'id' => $category->id,
+                    'name' => $category->name,
                 ];
             }),
-            ],
-        ], 200);
+
+        ], 200);;
     }
 
     public function updateEvents(Request $request, $id)

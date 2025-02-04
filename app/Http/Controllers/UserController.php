@@ -24,7 +24,7 @@ class UserController extends Controller
         ]);
 
         try {
-            
+
             $roleName = $validated['is_Organizer'] ? 'organizer' : 'user';
             $roleId = Roles::where('name', $roleName)->first()->id;
 
@@ -45,8 +45,8 @@ class UserController extends Controller
 
             return response()->json([
                 'message' => 'User registered successfully',
-            ], 201);     
-        }catch (\Exception $e) {
+            ], 201);
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'User registration failed',
                 'error' => $e->getMessage()
@@ -79,26 +79,27 @@ class UserController extends Controller
 
     public function logOut(Request $request)
     {
-        $user = Auth::guard('sanctum')->user();
+        try {
+            $user = Auth::guard('sanctum')->user();
 
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not authenticated'
-            ], 401);
-        }
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Account not found'
+                ], 404);
+            }
 
-        try{
             $user->tokens->each(function ($token) {
                 $token->delete();
             });
-        }catch(Exception $e){
+
+            return response()->json([
+                'message' => 'Log out successfully'
+            ], 200);
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
             ],  500);
         }
-        return response()->json([
-            'message' => 'User logged out successfully'
-        ], 200);
     }
 
     public function getProfile(Request $request)
@@ -107,7 +108,7 @@ class UserController extends Controller
 
         if (!$authorizationHeader) {
             return response()->json([
-               'message' => 'Authorization header missing'
+                'message' => 'Authorization header missing'
             ], 401);
         }
 
@@ -130,14 +131,13 @@ class UserController extends Controller
             }
 
             return response()->json([
-                    'firstname' => $userData->firstname,
-                    'lastname' => $userData->lastname,
-                    'email' => $userData->email,
-                    'organizer_name' => $userData->organizer_name, 
-                    'role' => $userData->role->name, 
+                'firstname' => $userData->firstname,
+                'lastname' => $userData->lastname,
+                'email' => $userData->email,
+                'organizer_name' => $userData->organizer_name,
+                'role' => $userData->role->name,
             ], 200);
-
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to decode token',
                 'error' => $e->getMessage()
@@ -147,68 +147,69 @@ class UserController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = Auth::guard('sanctum')->user();
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'firstname' => 'required_if:is_Organizer,false|nullable|string|max:255',
-            'lastname' => 'required_if:is_Organizer,false|nullable|string|max:255',
-            'organizer_name' => 'required_if:is_Organizer,true|nullable|string|max:255',
-        ]);
-
-        if ($user->role && $user->role->name === 'organizer') {
-            if (isset($validated['organizer_name'])) {
-                $user->organizer_name = $validated['organizer_name'];
-            }
-        } else {
-            if (isset($validated['firstname'])) {
-                $user->firstname = $validated['firstname'];
-            }
-            if (isset($validated['lastname'])) {
-                $user->lastname = $validated['lastname'];
-            }
-        }
-        
         try {
-            $user->save();
-        } catch (\Exception $e) {
+            $user = Auth::guard('sanctum')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Account not found'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'firstname' => 'required_if:is_Organizer,false|nullable|string|max:255',
+                'lastname' => 'required_if:is_Organizer,false|nullable|string|max:255',
+                'organizer_name' => 'required_if:is_Organizer,true|nullable|string|max:255',
+            ]);
+
+            $userExist = User::find($user->id);
+
+            if ($user->role->name === 'organizer') {
+                if (isset($validated['organizer_name'])) {
+                    $userExist->organizer_name = $validated['organizer_name'];
+                }
+            } else {
+                if (isset($validated['firstname'])) {
+                    $userExist->firstname = $validated['firstname'];
+                }
+                if (isset($validated['lastname'])) {
+                    $userExist->lastname = $validated['lastname'];
+                }
+            }
+
+            $userExist->save();
+
             return response()->json([
-                'message' => 'Failed to update profile',
-                'error' => $e->getMessage()
+                'message' => 'Profile updated successfully',
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
             ], 500);
         }
-        
-        return response()->json([
-            'message' => 'Profile updated successfully',
-        ], 200); 
     }
 
     public function deleteProfile(Request $request)
     {
-        $user = Auth::guard('sanctum')->user();
-
-        if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
-        }
-
         try {
-            $user->delete(); 
+            $user = Auth::guard('sanctum')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            $userExist = User::find($user->id);
+            $userExist->delete();
+
             return response()->json([
-                'message' => 'Your profile has been deleted successfully'
+                'message' => 'Account deleted successfully'
             ], 200);
-        } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Failed to delete profile',
-            'error' => $e->getMessage()
-        ], 500);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
-
 }
