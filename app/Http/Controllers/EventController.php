@@ -124,12 +124,12 @@ class EventController extends Controller
 
     public function updateEvents(Request $request, $id)
     {
-        dd([
-            'all_data' => $request->all(),
-            'json' => $request->json()->all(),
-            'input' => $request->input(),
-            'files' => $request->file()
-        ]);
+        // dd([
+        //     'all_data' => $request->all(),
+        //     'json' => $request->json()->all(),
+        //     'input' => $request->input(),
+        //     'files' => $request->file()
+        // ]);
 
         try {
             $user = Auth::guard('sanctum')->user();
@@ -171,10 +171,10 @@ class EventController extends Controller
                 'categories.*' => 'exists:categories,id'
             ]);
 
-            if ($request->hasFile('cover')) {
-                $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-                $event->cover = $uploadedCoverUrl;
-            }
+            // if ($request->hasFile('cover')) {
+            //     $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+            //     $event->cover = $uploadedCoverUrl;
+            // }
 
             // $event->cover = $validated['cover'] ?? $event->cover;
             $event->title = $validated['title'];
@@ -198,7 +198,6 @@ class EventController extends Controller
                 // 'req' => $request
             ], 500);
         }
-        // dd($request->all());
     }
 
     public function destroyEvents(Request $request, $id)
