@@ -7,7 +7,6 @@
   <title>Confirmation</title>
 </head>
 <body>
-  <h1>Reservation</h1>
-  <p>Here's your tickets! </p>
+  <p>{{ $userFirstname}} {{ $userLastname}} your order has been made.</p>
 </body>
 </html>

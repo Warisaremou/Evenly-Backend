@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\OrderMail;
+use App\Models\Events;
 use App\Models\Orders;
 use App\Models\Tickets;
 use Barryvdh\DomPDF\PDF;
@@ -24,7 +25,7 @@ class OrdersController extends Controller
     public function createOrders(Request $request)
     {
         try {
-            $user = Auth::guard('sanctum')->user();
+            $user = $request->user();
 
             if (!$user || $user->role->name !== 'user') {
                 return response()->json([
@@ -74,15 +75,13 @@ class OrdersController extends Controller
                 'lastname' => $user->lastname,
             ];
 
-            $pdf = app(PDF::class);
-            $pdf->loadView('emails.order-pdf', $orderDetails);
+            // $pdf = app(PDF::class);
+            // $pdf->loadView('emails.order-pdf', $orderDetails);
 
-            Mail::to($user->email)->queue(new OrderMail($orderDetails))->attachData($pdf->output(), "text.pdf");
+            Mail::to($user)->later(now()->addMinutes(2), new OrderMail($user));
             
             return response()->json([
                 'message' => 'Order successfully done. An email will be sent to you now!',
-                'orderList' => $orderList,
-                'orderDetails' => $orderDetails
             ], 201);
 
 
@@ -118,6 +117,29 @@ class OrdersController extends Controller
                 'message' => $e->getMessage()
             ],  500);
         }
+    }
+
+    public function getOrdersOnOrganizerEvents(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user || $user->role->name !== 'organizer') {
+            return response()->json([
+                'message' => 'Only organizers can view events.',
+            ], 403);
+        }
+
+        $events = Events::where('user_id', $user->id)->get();
+
+        $ordersData = $events->map(function ($event) {
+            $ticketIds = Tickets::where('event_id', $event->id)->pluck('id');
+
+            $orders = Orders::whereIn('ticket_id', $ticketIds)->get();
+
+            return $orders;
+        })->flatten();
+
+        return response()->json($ordersData, 200);
     }
 
     public function cancelOrders(Request $request, $id)
