@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class OrdersController extends Controller
 {
@@ -53,15 +54,15 @@ class OrdersController extends Controller
                 ], 400);
             }
 
-            $orderList = array_map(fn () => Orders::create([
+            $orderList = array_map(fn() => Orders::create([
                 'user_id' => $user->id,
                 'ticket_id' => $validated['ticket_id'],
                 'is_canceled' => false
             ]), range(1, $validated['quantity']));
-           
+
             $ticket->decrement('quantity', $validated['quantity']);
-            
-            $updatedTicket = Tickets::find($ticket->id); 
+
+            $updatedTicket = Tickets::find($ticket->id);
 
             $orderDetails = [
                 'event_name' => $updatedTicket->event->title,
@@ -77,21 +78,22 @@ class OrdersController extends Controller
 
             $pdf = app(PDF::class);
 
-            $pdf->loadView('emails.ticket', $orderDetails)->save(public_path("upload/user-ticket.pdf"));
+            $pdf->loadView('emails.ticket', $orderDetails);
 
-            // $loadedFile = $pdf->loadFile(public_path("upload/user-ticket.pdf"));
+            // Store file to local driver
+            Storage::disk('local')->put('/tickets/ticket.pdf', $pdf->output());
 
-            dd($pdf->output());
+            // Get file path
+            $TicketPath = Storage::path('/tickets/ticket.pdf');
+
             // Upload Pdf to cloudinary
-            $ticketURL = cloudinary()->upload($pdf->output(), ['folder' => 'evenly-tickets', 'verify' => false])->getSecurePath();
+            $ticketURL = cloudinary()->upload($TicketPath, ['folder' => 'evenly-tickets', 'access_mode' => 'public', 'verify' => false])->getSecurePath();
 
             Mail::to($user)->later(now()->addMinutes(2), new OrderMail($user, $ticketURL));
-            
+
             return response()->json([
-                'message' => 'Order successfully done. An email will be sent to you now!',
+                'message' => 'Order successfully made. An email will be sent to you with your ticket',
             ], 201);
-
-
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -119,7 +121,7 @@ class OrdersController extends Controller
             }
 
             return response()->json(['data' => $order], 200);
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
             ],  500);
@@ -202,7 +204,7 @@ class OrdersController extends Controller
                 'message' => 'Only users can place orders'
             ], 403);
         }
-        
+
         $order = Orders::findOrFail($id);
 
         if (!$order) {
