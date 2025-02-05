@@ -75,10 +75,17 @@ class OrdersController extends Controller
                 'lastname' => $user->lastname,
             ];
 
-            // $pdf = app(PDF::class);
-            // $pdf->loadView('emails.order-pdf', $orderDetails);
+            $pdf = app(PDF::class);
 
-            Mail::to($user)->later(now()->addMinutes(2), new OrderMail($user));
+            $pdf->loadView('emails.ticket', $orderDetails)->save(public_path("upload/user-ticket.pdf"));
+
+            // $loadedFile = $pdf->loadFile(public_path("upload/user-ticket.pdf"));
+
+            dd($pdf->output());
+            // Upload Pdf to cloudinary
+            $ticketURL = cloudinary()->upload($pdf->output(), ['folder' => 'evenly-tickets', 'verify' => false])->getSecurePath();
+
+            Mail::to($user)->later(now()->addMinutes(2), new OrderMail($user, $ticketURL));
             
             return response()->json([
                 'message' => 'Order successfully done. An email will be sent to you now!',
