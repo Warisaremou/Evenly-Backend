@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderMail;
+use App\Models\Events;
 use App\Models\Orders;
 use App\Models\Tickets;
+use Barryvdh\DomPDF\PDF;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class OrdersController extends Controller
 {
@@ -20,7 +26,7 @@ class OrdersController extends Controller
     public function createOrders(Request $request)
     {
         try {
-            $user = Auth::guard('sanctum')->user();
+            $user = $request->user();
 
             if (!$user || $user->role->name !== 'user') {
                 return response()->json([
@@ -48,32 +54,45 @@ class OrdersController extends Controller
                 ], 400);
             }
 
-            $order = Orders::create([
+            $orderList = array_map(fn() => Orders::create([
                 'user_id' => $user->id,
                 'ticket_id' => $validated['ticket_id'],
                 'is_canceled' => false
-            ]);
+            ]), range(1, $validated['quantity']));
 
-            $ticket->quantity -= $validated['quantity'];
-            $ticket->save();
+            $ticket->decrement('quantity', $validated['quantity']);
 
-            $updatedTicket = Tickets::find($ticket->id); 
+            $updatedTicket = Tickets::find($ticket->id);
+
+            $orderDetails = [
+                'event_name' => $updatedTicket->event->title,
+                'date' => $updatedTicket->event->date,
+                'time' => $updatedTicket->event->time,
+                'location' => $updatedTicket->event->location,
+                'ticket_name' => $updatedTicket->name,
+                'price' => $updatedTicket->price,
+                'type_ticket' => $updatedTicket->type_ticket->name,
+                'firstname' => $user->firstname,
+                'lastname' => $user->lastname,
+            ];
+
+            $pdf = app(PDF::class);
+
+            $pdf->loadView('emails.ticket', $orderDetails);
+
+            // Store file to local driver
+            Storage::disk('local')->put('/tickets/ticket.pdf', $pdf->output());
+
+            // Get file path
+            $TicketPath = Storage::path('/tickets/ticket.pdf');
+
+            // Upload Pdf to cloudinary
+            $ticketURL = cloudinary()->upload($TicketPath, ['folder' => 'evenly-tickets', 'access_mode' => 'public', 'verify' => false])->getSecurePath();
+
+            Mail::to($user)->later(now()->addMinutes(2), new OrderMail($user, $ticketURL));
 
             return response()->json([
-                'data' => [
-                    'order_id' => $order->id,
-                    'user_id' => $user->id,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'email' => $user->email,
-                    'ticket_id' => $updatedTicket->id,
-                    'ticket_name' => $updatedTicket->name,
-                    'remaining_quantity' => $updatedTicket->quantity,
-                    'ticket_price' => $updatedTicket->price,
-                    'event_id' => $updatedTicket->event->id,
-                    'type_ticket' => $updatedTicket->type_ticket->name,
-                    'ordered_quantity' => $validated['quantity']
-                ]
+                'message' => 'Order successfully made. An email will be sent to you with your ticket',
             ], 201);
         } catch (Exception $e) {
             return response()->json([
@@ -102,11 +121,34 @@ class OrdersController extends Controller
             }
 
             return response()->json(['data' => $order], 200);
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
             ],  500);
         }
+    }
+
+    public function getOrdersOnOrganizerEvents(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user || $user->role->name !== 'organizer') {
+            return response()->json([
+                'message' => 'Only organizers can view events.',
+            ], 403);
+        }
+
+        $events = Events::where('user_id', $user->id)->get();
+
+        $ordersData = $events->map(function ($event) {
+            $ticketIds = Tickets::where('event_id', $event->id)->pluck('id');
+
+            $orders = Orders::whereIn('ticket_id', $ticketIds)->get();
+
+            return $orders;
+        })->flatten();
+
+        return response()->json($ordersData, 200);
     }
 
     public function cancelOrders(Request $request, $id)
@@ -162,7 +204,7 @@ class OrdersController extends Controller
                 'message' => 'Only users can place orders'
             ], 403);
         }
-        
+
         $order = Orders::findOrFail($id);
 
         if (!$order) {

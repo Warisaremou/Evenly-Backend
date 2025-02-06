@@ -30,10 +30,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('/api')->group(function () {
     Route::prefix('roles')->group(function () {
         Route::get('/', [RolesController::class, 'getRoles']);
-        // Route::post('/', [RolesController::class, 'createRoles']);
         Route::get('/{id}', [RolesController::class, 'getRolesById']);
-        Route::put('/{id}', [RolesController::class, 'updateRoles']);
-        Route::delete('/{id}', [RolesController::class, 'destroyRoles']);
     });
 
     Route::prefix('users')->group(function () {
@@ -53,6 +50,7 @@ Route::prefix('/api')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [EventController::class, 'createEvents']);
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
+            Route::put('/{id}/cover', [EventController::class, 'updateCoverEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
             Route::get('/{id}/events_organizer', [EventController::class, 'getEventsByOrganizer']);
         });
@@ -93,6 +91,7 @@ Route::prefix('/api')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [OrdersController::class, 'createOrders']);
             Route::get('/user/Allorders', [OrdersController::class, 'getOrdersByUser']);
+            Route::get('/events_order', [OrdersController::class, 'getOrdersOnOrganizerEvents']);
             Route::patch('/{id}/cancel', [OrdersController::class, 'cancelOrders']);
             Route::delete('/{id}', [OrdersController::class, 'destroyOrders']);
         });
