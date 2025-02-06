@@ -113,19 +113,22 @@ class OrdersController extends Controller
             }
 
             $order = Orders::where('user_id', $user->id)->with(['ticket.event'])->get()
-            ->map(function ($order) {
-                return [
-                    'id'=> $order->id,
-                    'event_title' => $order->ticket->event->title,
-                    'event_date' => $order->ticket->event->date,
-                    'event_time' => $order->ticket->event->time,
-                    'event_location' => $order->ticket->event->location,
-                    'quantity' => $order->ticket->quantity,
-                    'is_canceled' =>  $order->is_canceled == 1 ? true : false
-                ];
-            });
+                ->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'cover' => $order->ticket->event->cover,
+                        'user_id' => $order->user_id,
+                        'ticket_id' => $order->ticket_id,
+                        'event_title' => $order->ticket->event->title,
+                        'event_date' => $order->ticket->event->date,
+                        'event_time' => $order->ticket->event->time,
+                        'event_location' => $order->ticket->event->location,
+                        'quantity' => $order->ticket->quantity,
+                        'is_canceled' =>  $order->is_canceled == 1 ? true : false
+                    ];
+                });
 
-            return response()->json( $order, 200);
+            return response()->json($order, 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -152,14 +155,14 @@ class OrdersController extends Controller
             $orders = Orders::whereIn('ticket_id', $ticketIds)->get();
 
             return $orders->map(function ($order) use ($event) {
-                return[
-                    'id'=> $order->id,
-                    'event_title' => $event->title, 
-                    'user_email' => $order->user->email, 
-                    'is_canceled' => $order->is_canceled == 1 ? true : false, 
+                return [
+                    'id' => $order->id,
+                    'event_title' => $event->title,
+                    'user_email' => $order->user->email,
+                    'is_canceled' => $order->is_canceled == 1 ? true : false,
+                    'ordered_at' => $order->created_at,
                 ];
             });
-
         });
 
         // dd($ordersData);

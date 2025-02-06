@@ -90,7 +90,7 @@ Route::prefix('/api')->group(function () {
         // Route::get('/{id}', [OrdersController::class, 'getOrdersById']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [OrdersController::class, 'createOrders']);
-            Route::get('/user/Allorders', [OrdersController::class, 'getOrdersByUser']);
+            Route::get('/user/reservations', [OrdersController::class, 'getOrdersByUser']);
             Route::get('/events_order', [OrdersController::class, 'getOrdersOnOrganizerEvents']);
             Route::patch('/{id}/cancel', [OrdersController::class, 'cancelOrders']);
             Route::delete('/{id}', [OrdersController::class, 'destroyOrders']);
