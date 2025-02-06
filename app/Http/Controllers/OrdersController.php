@@ -112,15 +112,20 @@ class OrdersController extends Controller
                 ], 403);
             }
 
-            $order = Orders::where('user_id', $user->id)->get();
+            $order = Orders::where('user_id', $user->id)->with(['ticket.event'])->get()
+            ->map(function ($order) {
+                return [
+                    'id'=> $order->id,
+                    'event_title' => $order->ticket->event->title,
+                    'event_date' => $order->ticket->event->date,
+                    'event_time' => $order->ticket->event->time,
+                    'event_location' => $order->ticket->event->location,
+                    'quantity' => $order->ticket->quantity,
+                    'is_canceled' =>  $order->is_canceled == 1 ? true : false
+                ];
+            });
 
-            if (!$order) {
-                return response()->json([
-                    'message' => 'Order not found'
-                ], 404);
-            }
-
-            return response()->json(['data' => $order], 200);
+            return response()->json( $order, 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -141,13 +146,23 @@ class OrdersController extends Controller
         $events = Events::where('user_id', $user->id)->get();
 
         $ordersData = $events->map(function ($event) {
+
             $ticketIds = Tickets::where('event_id', $event->id)->pluck('id');
 
             $orders = Orders::whereIn('ticket_id', $ticketIds)->get();
 
-            return $orders;
-        })->flatten();
+            return $orders->map(function ($order) use ($event) {
+                return[
+                    'id'=> $order->id,
+                    'event_title' => $event->title, 
+                    'user_email' => $order->user->email, 
+                    'is_canceled' => $order->is_canceled == 1 ? true : false, 
+                ];
+            });
 
+        });
+
+        // dd($ordersData);
         return response()->json($ordersData, 200);
     }
 
