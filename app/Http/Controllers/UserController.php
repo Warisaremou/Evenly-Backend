@@ -104,6 +104,7 @@ class UserController extends Controller
 
     public function getProfile(Request $request)
     {
+        dd($request->all());
         $authorizationHeader = $request->header('Authorization');
 
         if (!$authorizationHeader) {

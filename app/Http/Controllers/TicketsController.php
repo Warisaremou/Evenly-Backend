@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tickets;
+use App\Models\TypeTickets;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -80,7 +81,11 @@ class TicketsController extends Controller
             }
 
             $id = $request->user()->id;
-            $organizerTickets = Tickets::where('user_id', $id)->get();
+            $organizerTickets = Tickets::addSelect([
+                'ticket_type_name' => TypeTickets::select('name')
+                    ->whereColumn('id', 'tickets.type_ticket_id')
+                    ->limit(1)
+            ])->where('user_id', $id)->get();
 
             return response()->json(
                 $organizerTickets,
