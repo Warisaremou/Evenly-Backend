@@ -112,24 +112,24 @@
     </div>
 
     <div class="info">
-      <h2>ART CREATIVE FESTIVAL</h2>
+      <h2> {{ $event_name }} </h2>
       <div class="vertical-divider"></div>
       <div class="date_time">
-        <p>3 PM</p>
-        <p>25 SEPTEMBER 2024</p>
+        <p> {{ $time }} </p>
+        <p> {{ $date }} </p>
       </div>
       <div class="vertical-divider"></div>
-      <p class="name">Kimberly Nguyen</p>
+      <p class="name"> {{ $firstname .' '. $lastname }} </p>
     </div>
 
     <div class="details">
       <div class="details-header">
-        <p>123 Anywhere St. Any City.</p>
-        <p>PRICE: 0€</p>
+        <p> {{ $location }} </p>
+        <p>Price: {{ $price }} </p>
       </div>
-      <p class="publish_date">Purchased on 15th September 2024</p>
+      <p class="publish_date">Purchased on: {{ $created_at }}</p>
     </div>
   </div>
 </body>
 
-</html>
+</html> 

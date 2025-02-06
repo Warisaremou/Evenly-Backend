@@ -9,10 +9,12 @@ use App\Models\Tickets;
 use Barryvdh\DomPDF\PDF;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+
 
 class OrdersController extends Controller
 {
@@ -66,16 +68,17 @@ class OrdersController extends Controller
 
             $orderDetails = [
                 'event_name' => $updatedTicket->event->title,
-                'date' => $updatedTicket->event->date,
-                'time' => $updatedTicket->event->time,
+                'date' => Carbon::parse($updatedTicket->event->date)->format('d F Y'),
+                'time' => Carbon::parse($updatedTicket->event->time)->format('g A'),
                 'location' => $updatedTicket->event->location,
                 'ticket_name' => $updatedTicket->name,
-                'price' => $updatedTicket->price,
+                'price' => number_format($updatedTicket->price, 2, ',', ' ') . ' €',
                 'type_ticket' => $updatedTicket->type_ticket->name,
                 'firstname' => $user->firstname,
                 'lastname' => $user->lastname,
+                'created_at' => Carbon::parse($updatedTicket->date)->format('d F Y'),
             ];
-
+            // dd($orderDetails);
             $pdf = app(PDF::class);
 
             $pdf->loadView('emails.ticket', $orderDetails);
