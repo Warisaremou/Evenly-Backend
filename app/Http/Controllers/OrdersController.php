@@ -78,7 +78,7 @@ class OrdersController extends Controller
                 'lastname' => $user->lastname,
                 'created_at' => Carbon::parse($updatedTicket->date)->format('d F Y'),
             ];
-            // dd($orderDetails);
+            
             $pdf = app(PDF::class);
 
             $pdf->loadView('emails.ticket', $orderDetails);
@@ -115,6 +115,7 @@ class OrdersController extends Controller
                 ], 403);
             }
 
+            // To get the reservations that the user made
             $order = Orders::where('user_id', $user->id)->with(['ticket.event'])->get()
                 ->map(function ($order) {
                     return [
@@ -168,7 +169,6 @@ class OrdersController extends Controller
             });
         });
 
-        // dd($ordersData);
         return response()->json($ordersData, 200);
     }
 
