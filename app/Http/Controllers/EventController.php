@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Events;
+use App\Models\Tickets;
+use App\Models\TypeTickets;
 use App\Models\User;
+use App\Models\Orders;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -18,27 +21,33 @@ class EventController extends Controller
 
     public function getAllEvents()
     {
-        $events = Events::with('categories')->get();
+        try {
+            $events = Events::with('categories')->orderBy('created_at', 'desc')->get();
 
-        return response()->json($events->map(function ($event) {
-            return [
-                'id' => $event->id,
-                'cover' => $event->cover,
-                'title' => $event->title,
-                'date' => $event->date,
-                'time' => $event->time,
-                'location' => $event->location,
-                'description' => $event->description,
-                'created_at' => $event->created_at,
-                'updated_at' => $event->updated_at,
-                'categories' => $event->categories->map(function ($category) {
-                    return [
-                        'id' => $category->id,
-                        'name' => $category->name,
-                    ];
-                }),
-            ];
-        }), 200);
+            return response()->json($events->map(function ($event) {
+                return [
+                    'id' => $event->id,
+                    'cover' => $event->cover,
+                    'title' => $event->title,
+                    'date' => $event->date,
+                    'time' => $event->time,
+                    'location' => $event->location,
+                    'description' => $event->description,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at,
+                    'categories' => $event->categories->map(function ($category) {
+                        return [
+                            'id' => $category->id,
+                            'name' => $category->name,
+                        ];
+                    }),
+                ];
+            }), 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function createEvents(Request $request)
@@ -94,43 +103,56 @@ class EventController extends Controller
 
     public function getEventsDetails($id)
     {
-        $event = Events::with(['categories', 'user'])->find($id);
+        try {
+            $event = Events::with(['categories'])->findOrFail($id);
+            if (!$event) {
+                return response()->json([
+                    'message' => 'Event not found',
+                ], 404);
+            }
+            $eventTickets = Tickets::addSelect([
+                'ticket_type_name' => TypeTickets::select('name')
+                    ->whereColumn('id', 'tickets.type_ticket_id')
+                    ->limit(1)
+            ])->where('event_id', $id)->get();
 
-        if (!$event) {
             return response()->json([
-                'message' => 'Événement non trouvé'
-            ], 404);
+                'cover' => $event->cover,
+                'title' => $event->title,
+                'date' => $event->date,
+                'time' => $event->time,
+                'location' => $event->location,
+                'description' => $event->description,
+                'created_at' => $event->created_at,
+                'updated_at' => $event->updated_at,
+                'organizer_name' => $event->user->organizer_name,
+                'categories' => $event->categories->map(function ($category) {
+                    return [
+                        'id' => $category->id,
+                        'name' => $category->name,
+                    ];
+                }),
+                'tickets' => $eventTickets->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'name' => $ticket->name,
+                        'price' => $ticket->price,
+                        'ticket_type_name' =>
+                        $ticket->ticket_type_name,
+                        'quantity' => $ticket->quantity
+                    ];
+                }),
+
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ],  500);
         }
-
-        return response()->json([
-            'cover' => $event->cover,
-            'title' => $event->title,
-            'date' => $event->date,
-            'time' => $event->time,
-            'location' => $event->location,
-            'description' => $event->description,
-            'created_at' => $event->created_at,
-            'updated_at' => $event->updated_at,
-            'organizer_name' => $event->user->organizer_name,
-            'categories' => $event->categories->map(function ($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                ];
-            }),
-
-        ], 200);;
     }
 
     public function updateEvents(Request $request, $id)
     {
-        // dd([
-        //     'all_data' => $request->all(),
-        //     'json' => $request->json()->all(),
-        //     'input' => $request->input(),
-        //     'files' => $request->file()
-        // ]);
-
         try {
             $user = Auth::guard('sanctum')->user();
 
@@ -161,7 +183,6 @@ class EventController extends Controller
             }
 
             $validated = $request->validate([
-                // 'cover' => 'nullable|mimes:jpeg,png,jpg,gif|max:2000',
                 'title' => 'string|max:255',
                 'date' => 'date_format:Y-m-d',
                 'time' => 'date_format:H:i',
@@ -171,12 +192,6 @@ class EventController extends Controller
                 'categories.*' => 'exists:categories,id'
             ]);
 
-            // if ($request->hasFile('cover')) {
-            //     $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-            //     $event->cover = $uploadedCoverUrl;
-            // }
-
-            // $event->cover = $validated['cover'] ?? $event->cover;
             $event->title = $validated['title'];
             $event->date = $validated['date'];
             $event->time = $validated['time'];
@@ -194,8 +209,51 @@ class EventController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
-                // 'errors' => $e,
-                // 'req' => $request
+            ], 500);
+        }
+    }
+
+    public function updateCoverEvents(Request $request, $id)
+    {
+        try {
+            $user = Auth::guard('sanctum')->user();
+
+            if (!$user || $user->role->name !== 'organizer') {
+                return response()->json([
+                    'error' => 'Only organizers can update events.',
+                ], 403);
+            }
+
+            $event = Events::find($id);
+
+            if (!$event) {
+                return response()->json([
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
+            if (!$request->hasFile('cover')) {
+                return response()->json([
+                    'message' => 'Image not update'
+                ], 400);
+            }
+
+            $request->validate([
+                'cover' => 'mimes:jpeg,png,jpg,gif|max:2000'
+            ]);
+
+            $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+
+            $event->cover = $uploadedCoverUrl;
+            $event->save();
+
+            return response()->json([
+                'message' => 'Image update successfully',
+                'cover_url' => $uploadedCoverUrl
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
