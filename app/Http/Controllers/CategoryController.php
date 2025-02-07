@@ -11,7 +11,7 @@ class CategoryController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum', ['except' => ['getAllCategories', 'getCategoriesById']]);
+        $this->middleware('auth:sanctum', ['except' => ['getAllCategories']]);
     }
 
     public function getAllCategories()
@@ -37,15 +37,13 @@ class CategoryController extends Controller
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'events' => 'required|array',
-                'events.*' => 'exists:events,id'
             ]);
 
             $category = Categories::create(['name' => $validated['name']]);
 
-            collect($validated['events'])->map(function ($eventId) use ($category) {
-                $category->events()->attach($eventId);
-            });
+            // collect($validated['events'])->map(function ($eventId) use ($category) {
+            //     $category->events()->attach($eventId);
+            // });
 
             return response()->json([
                 'message' => 'Category added successfully',
@@ -56,37 +54,6 @@ class CategoryController extends Controller
                 'message' => $e->getMessage()
             ],  500);
         }
-    }
-
-    public function getCategoriesById($id)
-    {
-        $category = Categories::with('events')->find($id);
-
-        if (!$category) {
-            return response()->json([
-                'message' => 'Category not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'data' => [
-                'name' => $category->name,
-                'created_at' => $category->created_at,
-                'updated_at' => $category->updated_at,
-                'categories' => $category->events->map(function ($event) {
-                    return [
-                        'cover' => $event->cover,
-                        'title' => $event->title,
-                        'date' => $event->date,
-                        'time' => $event->time,
-                        'location' => $event->location,
-                        'description' => $event->description,
-                        'created_at' => $event->created_at,
-                        'updated_at' => $event->updated_at,
-                    ];
-                }),
-            ],
-        ], 200);
     }
 
     public function updateCategories(Request $request, $id)
@@ -102,20 +69,12 @@ class CategoryController extends Controller
 
             $category = Categories::findOrFail($id);
 
-            if (!$category) {
-                return response()->json([
-                    'message' => 'Category not found'
-                ], 404);
-            }
-
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'events' => 'required|array',
-                'events.*' => 'exists:events,id'
             ]);
 
             $category->name = $validated['name'];
-            $category->events()->sync($validated['events']);
+            // $category->events()->sync($validated['events']);
             $category->save();
 
             return response()->json([
@@ -140,12 +99,6 @@ class CategoryController extends Controller
         }
 
         $category = Categories::findOrFail($id);
-
-        if (!$category) {
-            return response()->json([
-                'message' => 'Category not found'
-            ], 404);
-        }
 
         $category->delete();
 

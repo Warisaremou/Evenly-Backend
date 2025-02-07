@@ -53,11 +53,6 @@ class TypeTicketsController extends Controller
         ]);
 
         $type_ticket = TypeTickets::findOrFail($id);
-        if (!$type_ticket) {
-            return response()->json([
-                'message' => 'TypeTicket not found'
-            ], 404);
-        }
 
         $type_ticket->name = $validated['name'];
         $type_ticket->save();

@@ -46,7 +46,7 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'User registered successfully',
             ], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'User registration failed',
                 'error' => $e->getMessage()
@@ -104,6 +104,7 @@ class UserController extends Controller
 
     public function getProfile(Request $request)
     {
+        // dd($request->all());
         $authorizationHeader = $request->header('Authorization');
 
         if (!$authorizationHeader) {
@@ -130,14 +131,21 @@ class UserController extends Controller
                 ], 404);
             }
 
-            return response()->json([
-                'firstname' => $userData->firstname,
-                'lastname' => $userData->lastname,
-                'email' => $userData->email,
-                'organizer_name' => $userData->organizer_name,
-                'role' => $userData->role->name,
-            ], 200);
-        } catch (\Exception $e) {
+            if ($userData->role->name === 'organizer') {
+                return response()->json([
+                    'organizer_name' => $userData->organizer_name,
+                    'email' => $userData->email,
+                    'role' => $userData->role->name,
+                ], 200);
+            }else{ 
+                return response()->json([
+                    'firstname' => $userData->firstname,
+                    'lastname' => $userData->lastname,
+                    'email' => $userData->email,
+                    'role' => $userData->role->name,
+                ], 200);
+            }
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Failed to decode token',
                 'error' => $e->getMessage()

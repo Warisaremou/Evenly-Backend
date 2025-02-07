@@ -11,7 +11,6 @@ class TicketsController extends Controller
 {
     public function getTickets()
     {
-        // $tickets = Tickets::paginate(10);
         $tickets = Tickets::all();
         return response()->json($tickets, 200);
     }
@@ -35,6 +34,7 @@ class TicketsController extends Controller
                 'event_id' => 'required|uuid|exists:events,id',
                 'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
             ]);
+            // dd($validated);
 
             $ticket = Tickets::create([
                 'name' => $validated['name'],
@@ -60,12 +60,6 @@ class TicketsController extends Controller
     public function getTicketsById($id)
     {
         $ticket = Tickets::findOrFail($id);
-
-        if (!$ticket) {
-            return response()->json([
-                'message' => 'Ticket not found'
-            ], 404);
-        }
 
         return response()->json($ticket, 200);
     }

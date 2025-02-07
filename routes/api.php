@@ -52,7 +52,7 @@ Route::prefix('/api')->group(function () {
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
             Route::put('/{id}/cover', [EventController::class, 'updateCoverEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
-            Route::get('/{id}/events_organizer', [EventController::class, 'getEventsByOrganizer']);
+            Route::get('/events_organizer', [EventController::class, 'getEventsByOrganizer']);
         });
     });
 
@@ -60,7 +60,7 @@ Route::prefix('/api')->group(function () {
         Route::get('/', [CategoryController::class, 'getAllCategories']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [CategoryController::class, 'createCatergories']);
-            Route::put('/{id}', [CategoryController::class, 'updateCategories']);
+            Route::patch('/{id}', [CategoryController::class, 'updateCategories']);
             Route::delete('/{id}', [CategoryController::class, 'destroyCategories']);
         });
     });
@@ -69,7 +69,7 @@ Route::prefix('/api')->group(function () {
         Route::get('/', [TypeTicketsController::class, 'getTypeTickets']);
         Route::post('/', [TypeTicketsController::class, 'createTypeTickets']);
         Route::get('/{id}', [TypeTicketsController::class, 'getTypeTicketsById']);
-        Route::put('/{id}', [TypeTicketsController::class, 'updateTypeTickets']);
+        Route::patch('/{id}', [TypeTicketsController::class, 'updateTypeTickets']);
         Route::delete('/{id}', [TypeTicketsController::class, 'destroyTypeTickets']);
     });
 
@@ -87,7 +87,6 @@ Route::prefix('/api')->group(function () {
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrdersController::class, 'getOrders']);
-        // Route::get('/{id}', [OrdersController::class, 'getOrdersById']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [OrdersController::class, 'createOrders']);
             Route::get('/user/reservations', [OrdersController::class, 'getOrdersByUser']);

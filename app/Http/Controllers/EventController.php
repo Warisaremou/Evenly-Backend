@@ -137,8 +137,7 @@ class EventController extends Controller
                         'id' => $ticket->id,
                         'name' => $ticket->name,
                         'price' => $ticket->price,
-                        'ticket_type_name' =>
-                        $ticket->ticket_type_name,
+                        'ticket_type_name' => $ticket->ticket_type_name,
                         'quantity' => $ticket->quantity
                     ];
                 }),
@@ -270,12 +269,6 @@ class EventController extends Controller
 
         $event = Events::findOrFail($id);
 
-        if (!$event) {
-            return response()->json([
-                'message' => 'Event not found'
-            ], 404);
-        }
-
         $event->delete();
 
         return response()->json([
@@ -283,7 +276,7 @@ class EventController extends Controller
         ], 200);
     }
 
-    public function getEventsByOrganizer($id)
+    public function getEventsByOrganizer(Request $request)
     {
         $user = Auth::guard('sanctum')->user();
 
