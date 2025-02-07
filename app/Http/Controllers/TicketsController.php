@@ -108,7 +108,12 @@ class TicketsController extends Controller
                 ], 403);
             }
 
-            $eventTickets = Tickets::where('event_id', $id)->get();
+            $eventTickets =
+                Tickets::addSelect([
+                    'ticket_type_name' => TypeTickets::select('name')
+                        ->whereColumn('id', 'tickets.type_ticket_id')
+                        ->limit(1)
+                ])->where('event_id', $id)->get();
 
             return response()->json(
                 $eventTickets,
