@@ -61,6 +61,12 @@ class TicketsController extends Controller
     {
         $ticket = Tickets::findOrFail($id);
 
+        if (! $ticket) {
+            return response()->json([
+                'message'=> 'Ticket not found'
+            ]);
+        }
+
         return response()->json($ticket, 200);
     }
 

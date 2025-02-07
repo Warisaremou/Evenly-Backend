@@ -30,21 +30,6 @@ class TypeTicketsController extends Controller
         ], 201);
     }
 
-    public function getTypeTicketsById($id)
-    {
-        $type_ticket = TypeTickets::findOrFail($id);
-
-        if (!$type_ticket) {
-            return response()->json([
-                'message' => 'TypeTicket not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'data' => $type_ticket
-        ], 200);
-    }
-
     public function updateTypeTickets(Request $request, $id)
     {
 

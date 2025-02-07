@@ -288,12 +288,6 @@ class EventController extends Controller
 
         $events = Events::with('categories')->where('user_id', $user->id)->get();
 
-        if ($events->isEmpty()) {
-            return response()->json([
-                'message' => 'Event not found'
-            ], 404);
-        }
-
         return response()->json([
             'organizer_name' => $user->name,
             'events' => $events->map(function ($event) {

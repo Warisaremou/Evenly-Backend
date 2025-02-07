@@ -52,7 +52,7 @@ Route::prefix('/api')->group(function () {
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
             Route::put('/{id}/cover', [EventController::class, 'updateCoverEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
-            Route::get('/events_organizer', [EventController::class, 'getEventsByOrganizer']);
+            Route::get('/organizer/event', [EventController::class, 'getEventsByOrganizer']);
         });
     });
 
@@ -68,7 +68,6 @@ Route::prefix('/api')->group(function () {
     Route::prefix('type-tickets')->group(function () {
         Route::get('/', [TypeTicketsController::class, 'getTypeTickets']);
         Route::post('/', [TypeTicketsController::class, 'createTypeTickets']);
-        Route::get('/{id}', [TypeTicketsController::class, 'getTypeTicketsById']);
         Route::patch('/{id}', [TypeTicketsController::class, 'updateTypeTickets']);
         Route::delete('/{id}', [TypeTicketsController::class, 'destroyTypeTickets']);
     });
