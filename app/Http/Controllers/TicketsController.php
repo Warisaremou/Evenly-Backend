@@ -34,7 +34,6 @@ class TicketsController extends Controller
                 'event_id' => 'required|uuid|exists:events,id',
                 'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
             ]);
-            // dd($validated);
 
             $ticket = Tickets::create([
                 'name' => $validated['name'],

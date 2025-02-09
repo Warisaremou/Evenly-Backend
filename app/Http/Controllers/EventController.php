@@ -72,9 +72,7 @@ class EventController extends Controller
                 'categories.*' => 'exists:categories,id'
             ]);
 
-            // Upload image to cloudinary
             $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-            // dd($uploadedCoverUrl);
 
             $event = Events::create([
                 'cover' => $uploadedCoverUrl,
