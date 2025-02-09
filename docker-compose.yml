@@ -8,8 +8,8 @@ services:
       - 5432:5432
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password1234
-      POSTGRES_DB: evenly_blog
+      POSTGRES_PASSWORD: 
+      POSTGRES_DB: 
 
   adminer:
     image: adminer
