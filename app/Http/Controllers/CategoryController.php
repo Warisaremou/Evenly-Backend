@@ -39,11 +39,9 @@ class CategoryController extends Controller
                 'name' => 'required|string|max:255',
             ]);
 
-            $category = Categories::create(['name' => $validated['name']]);
-
-            // collect($validated['events'])->map(function ($eventId) use ($category) {
-            //     $category->events()->attach($eventId);
-            // });
+            $category = Categories::create([
+                'name' => $validated['name']
+            ]);
 
             return response()->json([
                 'message' => 'Category added successfully',
@@ -74,7 +72,6 @@ class CategoryController extends Controller
             ]);
 
             $category->name = $validated['name'];
-            // $category->events()->sync($validated['events']);
             $category->save();
 
             return response()->json([

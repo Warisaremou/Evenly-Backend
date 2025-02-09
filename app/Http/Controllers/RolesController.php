@@ -11,24 +11,19 @@ class RolesController extends Controller
     {
         $roles = Roles::all();
 
-        if (!$roles) {
-            return response()->json([
-                'message' => 'Roles not found'
-            ], 404);
-        }
         return response()->json(['data' => $roles], 200);
     }
 
     public function getRolesById($id)
     {
-        $roles = Roles::findOrFail($id);
+        $role = Roles::findOrFail($id);
 
-        if (!$roles) {
+        if (!$role) {
             return response()->json([
                 'message' => 'Roles not found'
             ], 404);
         }
 
-        return response()->json(['data' => $roles], 200);
+        return response()->json(['data' => $role], 200);
     }
 }
