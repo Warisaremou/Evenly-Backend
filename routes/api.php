@@ -52,7 +52,7 @@ Route::prefix('/api')->group(function () {
             Route::patch('/{id}', [EventController::class, 'updateEvents']);
             Route::put('/{id}/cover', [EventController::class, 'updateCoverEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
-            Route::get('/organizer/event', [EventController::class, 'getEventsByOrganizer']);
+            Route::get('/organizer/events', [EventController::class, 'getEventsByOrganizer']);
         });
     });
 
