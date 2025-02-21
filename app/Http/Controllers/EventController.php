@@ -175,81 +175,51 @@ class EventController extends Controller
                 ], 403);
             }
 
-            if (!$request->all()) {
+            if ($request->hasFile('cover')) {
+                $request->validate([
+                    'cover' => 'mimes:jpeg,png,jpg,gif|max:2000'
+                ]);
+
+                $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+
+                $event->cover = $uploadedCoverUrl;
+                $event->save();
+
                 return response()->json([
-                    'message' => 'Request is empty. Make sure you are sending valid JSON or form-data.'
-                ], 400);
+                    'message' => 'Image update successfully',
+                    'cover_url' => $uploadedCoverUrl
+                ]);
             }
 
-            $validated = $request->validate([
-                'title' => 'string|max:255',
-                'date' => 'date_format:Y-m-d',
-                'time' => 'date_format:H:i',
-                'location' => 'string|max:255',
-                'description' => 'string',
-                'categories' => 'array',
-                'categories.*' => 'exists:categories,id'
-            ]);
+            if ($request->all()) {
+                $validated = $request->validate([
+                    'title' => 'string|max:255',
+                    'date' => 'date_format:Y-m-d',
+                    'time' => 'date_format:H:i',
+                    'location' => 'string|max:255',
+                    'description' => 'string',
+                    'categories' => 'array',
+                    'categories.*' => 'exists:categories,id'
+                ]);
 
-            $event->title = $validated['title'];
-            $event->date = $validated['date'];
-            $event->time = $validated['time'];
-            $event->location = $validated['location'];
-            $event->description = $validated['description'];
+                $event->title = $validated['title'];
+                $event->date = $validated['date'];
+                $event->time = $validated['time'];
+                $event->location = $validated['location'];
+                $event->description = $validated['description'];
 
-            $event->categories()->sync($validated['categories']);
+                $event->categories()->sync($validated['categories']);
 
-            $event->save();
+                $event->save();
 
+                return response()->json([
+                    'message' => 'Event updated successfully',
+                    'data' => $event
+                ], 200);
+            }
             return response()->json([
-                'message' => 'Event updated successfully',
-                'data' => $event
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function updateCoverEvents(Request $request, $id)
-    {
-        try {
-            $user = Auth::guard('sanctum')->user();
-
-            if (!$user || $user->role->name !== 'organizer') {
-                return response()->json([
-                    'error' => 'Only organizers can update events.',
-                ], 403);
-            }
-
-            $event = Events::find($id);
-
-            if (!$event) {
-                return response()->json([
-                    'message' => 'Event not found'
-                ], 404);
-            }
-
-            if (!$request->hasFile('cover')) {
-                return response()->json([
-                    'message' => 'Image not update'
-                ], 400);
-            }
-
-            $request->validate([
-                'cover' => 'mimes:jpeg,png,jpg,gif|max:2000'
-            ]);
-
-            $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-
-            $event->cover = $uploadedCoverUrl;
-            $event->save();
-
-            return response()->json([
-                'message' => 'Image update successfully',
-                'cover_url' => $uploadedCoverUrl
-            ]);
+                'message' => 'Request is empty. Make sure you are sending valid JSON or form-data.'
+            ], 400);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),

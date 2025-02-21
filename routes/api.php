@@ -49,8 +49,7 @@ Route::prefix('/api')->group(function () {
         Route::get('/{id}', [EventController::class, 'getEventsDetails']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [EventController::class, 'createEvents']);
-            Route::patch('/{id}', [EventController::class, 'updateEvents']);
-            Route::put('/{id}/cover', [EventController::class, 'updateCoverEvents']);
+            Route::put('/{id}/event_cover', [EventController::class, 'updateEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
             Route::get('/organizer/event', [EventController::class, 'getEventsByOrganizer']);
         });
