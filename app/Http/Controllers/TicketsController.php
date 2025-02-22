@@ -63,7 +63,7 @@ class TicketsController extends Controller
 
         if (! $ticket) {
             return response()->json([
-                'message'=> 'Ticket not found'
+                'message' => 'Ticket not found'
             ]);
         }
 
@@ -131,7 +131,7 @@ class TicketsController extends Controller
         try {
             if ($request->user()->role->name !== 'organizer') {
                 return response()->json([
-                    'error' => 'Only organizers can add tickets.',
+                    'error' => 'Only organizers can update tickets.',
                 ], 403);
             }
 
