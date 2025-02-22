@@ -288,9 +288,10 @@ class EventController extends Controller
 
         $events = Events::with('categories')->where('user_id', $user->id)->get();
 
-        return response()->json([
-            $events->map(function ($event) {
+        $organizerEvents = $events->map(
+            function ($event) {
                 return [
+                    'id' => $event->id,
                     'cover' => $event->cover,
                     'title' => $event->title,
                     'date' => $event->date,
@@ -307,7 +308,13 @@ class EventController extends Controller
                         ];
                     }),
                 ];
-            }),
-        ], 200);
+            }
+        );
+
+
+        return response()->json(
+            $organizerEvents,
+            200
+        );
     }
 }
