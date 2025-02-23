@@ -199,31 +199,18 @@ class EventController extends Controller
                 $event->description = $validated['description'];
                 $event->categories()->sync($validated['categories']);
 
-            if ($request->hasFile('cover')) {
-                $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-                $event->cover = $uploadedCoverUrl;
-            }
+                if ($request->hasFile('cover')) {
+                    $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+                    $event->cover = $uploadedCoverUrl;
+                }
 
                 $event->save();
 
-            return response()->json([
-                'message' => 'Event updated successfully',
-                'data' => $event
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
                 return response()->json([
                     'message' => 'Event updated successfully',
                     'data' => $event
                 ], 200);
             }
-            return response()->json([
-                'message' => 'Request is empty. Make sure you are sending valid JSON or form-data.'
-            ], 400);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
