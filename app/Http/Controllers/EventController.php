@@ -175,20 +175,10 @@ class EventController extends Controller
                 ], 403);
             }
 
-            if ($request->hasFile('cover')) {
-                $request->validate([
-                    'cover' => 'mimes:jpeg,png,jpg,gif|max:2000'
-                ]);
-
-                $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-
-                $event->cover = $uploadedCoverUrl;
-                $event->save();
-
+            if (!$request->all()) {
                 return response()->json([
-                    'message' => 'Image update successfully',
-                    'cover_url' => $uploadedCoverUrl
-                ]);
+                    'message' => 'Request is empty. Make sure you are sending valid JSON or form-data.'
+                ], 400);
             }
 
             if ($request->all()) {
@@ -207,11 +197,25 @@ class EventController extends Controller
                 $event->time = $validated['time'];
                 $event->location = $validated['location'];
                 $event->description = $validated['description'];
-
                 $event->categories()->sync($validated['categories']);
+
+            if ($request->hasFile('cover')) {
+                $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+                $event->cover = $uploadedCoverUrl;
+            }
 
                 $event->save();
 
+            return response()->json([
+                'message' => 'Event updated successfully',
+                'data' => $event
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
                 return response()->json([
                     'message' => 'Event updated successfully',
                     'data' => $event
@@ -256,12 +260,12 @@ class EventController extends Controller
             ], 403);
         }
 
-        $events = Events::with('categories')->where('user_id', $user->id)->get();
+        $events = Events::with('categories')->where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
 
-        return response()->json([
-            'organizer_name' => $user->name,
-            'events' => $events->map(function ($event) {
+        $organizerEvents = $events->map(
+            function ($event) {
                 return [
+                    'id' => $event->id,
                     'cover' => $event->cover,
                     'title' => $event->title,
                     'date' => $event->date,
@@ -278,7 +282,13 @@ class EventController extends Controller
                         ];
                     }),
                 ];
-            }),
-        ], 200);
+            }
+        );
+
+
+        return response()->json(
+            $organizerEvents,
+            200
+        );
     }
 }

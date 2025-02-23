@@ -51,7 +51,7 @@ Route::prefix('/api')->group(function () {
             Route::post('/', [EventController::class, 'createEvents']);
             Route::put('/{id}/event_cover', [EventController::class, 'updateEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
-            Route::get('/organizer/event', [EventController::class, 'getEventsByOrganizer']);
+            Route::get('/organizer/events', [EventController::class, 'getEventsByOrganizer']);
         });
     });
 
