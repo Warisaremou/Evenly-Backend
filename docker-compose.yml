@@ -5,7 +5,7 @@ services:
   php-fpm:
     build:
       context: .
-      dockerfile: ./docker/development/Dockerfile
+      dockerfile: ./docker/Dockerfile
     container_name: php
     restart: always
     working_dir: /var/www
@@ -23,7 +23,7 @@ services:
     container_name: nginx
     volumes:
       - ./app:/var/www
-      - ./docker/development/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
     restart: always
     ports:
       - 8008:80
