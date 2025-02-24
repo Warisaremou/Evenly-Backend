@@ -175,42 +175,35 @@ class EventController extends Controller
                 ], 403);
             }
 
-            if (!$request->all()) {
-                return response()->json([
-                    'message' => 'Request is empty. Make sure you are sending valid JSON or form-data.'
-                ], 400);
+            $validated = $request->validate([
+                'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2000',
+                'title' => 'string|max:255',
+                'date' => 'date_format:Y-m-d',
+                'time' => 'date_format:H:i',
+                'location' => 'string|max:255',
+                'description' => 'string',
+                'categories' => 'array',
+                'categories.*' => 'exists:categories,id'
+            ]);
+
+            $event->title = $validated['title'];
+            $event->date = $validated['date'];
+            $event->time = $validated['time'];
+            $event->location = $validated['location'];
+            $event->description = $validated['description'];
+            $event->categories()->sync($validated['categories']);
+
+            if ($request->hasFile('cover')) {
+                $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
+                $event->cover = $uploadedCoverUrl;
             }
 
-            if ($request->all()) {
-                $validated = $request->validate([
-                    'title' => 'string|max:255',
-                    'date' => 'date_format:Y-m-d',
-                    'time' => 'date_format:H:i',
-                    'location' => 'string|max:255',
-                    'description' => 'string',
-                    'categories' => 'array',
-                    'categories.*' => 'exists:categories,id'
-                ]);
+            $event->save();
 
-                $event->title = $validated['title'];
-                $event->date = $validated['date'];
-                $event->time = $validated['time'];
-                $event->location = $validated['location'];
-                $event->description = $validated['description'];
-                $event->categories()->sync($validated['categories']);
-
-                if ($request->hasFile('cover')) {
-                    $uploadedCoverUrl = cloudinary()->upload($request->file('cover')->getRealPath(), ['folder' => 'evenly', 'verify' => false])->getSecurePath();
-                    $event->cover = $uploadedCoverUrl;
-                }
-
-                $event->save();
-
-                return response()->json([
-                    'message' => 'Event updated successfully',
-                    'data' => $event
-                ], 200);
-            }
+            return response()->json([
+                'message' => 'Event updated successfully',
+                'data' => $event
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
