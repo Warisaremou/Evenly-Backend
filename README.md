@@ -24,21 +24,19 @@ Install dependencies
   composer install
 ```
 
-Fill `POSTGRES_PASSWORD:` and `POSTGRES_DB:` in docker-compose.yml file with your database password and name
-
-Run additional container to setup database and adminer
-
-```bash
-  docker compose up -d
-```
-
 Add .env file
 
 ```bash
   cp .env.example .env
 ```
 
-Fill `DB_DATABASE=` and `DB_PASSWORD=` in .env file with database name and password from docker-compose.yml file
+Fill `DB_DATABASE=` and `DB_PASSWORD=` in .env file with database name and password
+
+Run additional container to setup database and adminer
+
+```bash
+  docker compose up -d
+```
 
 Generate Application Key
 
@@ -66,5 +64,4 @@ Run seeders
 
 ## Links
 
--   Swagger: <http://localhost:3000/docs>
 -   Adminer (client for DB): <http://localhost:8080>
