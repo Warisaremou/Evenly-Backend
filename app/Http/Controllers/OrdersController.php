@@ -32,7 +32,7 @@ class OrdersController extends Controller
 
             if (!$user || $user->role->name !== 'user') {
                 return response()->json([
-                    'message' => 'Only users can place orders'
+                    'message' => 'Only users can make orders'
                 ], 403);
             }
 
@@ -111,7 +111,7 @@ class OrdersController extends Controller
 
             if (!$user || $user->role->name !== 'user') {
                 return response()->json([
-                    'message' => 'Only users can place orders'
+                    'message' => 'Only users can get orders'
                 ], 403);
             }
 
@@ -178,7 +178,7 @@ class OrdersController extends Controller
 
         if (!$user || $user->role->name !== 'user') {
             return response()->json([
-                'message' => 'Only users can place orders'
+                'message' => 'Only users can cancel orders'
             ], 403);
         }
 
@@ -222,7 +222,7 @@ class OrdersController extends Controller
 
         if (!$user || $user->role->name !== 'user') {
             return response()->json([
-                'message' => 'Only users can place orders'
+                'message' => 'Only users can delete orders'
             ], 403);
         }
 
