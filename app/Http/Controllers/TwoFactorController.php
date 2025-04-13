@@ -58,4 +58,17 @@ class TwoFactorController extends Controller
             ], 401);
         }
     }
+    public function disable2FA(Request $request)
+    {
+        $user = Auth::guard('sanctum')->user();
+
+        // Disable 2FA for the user
+        $user->google2fa_secret = null;
+        $user->two_factor_enabled = false;
+        $user->save();
+
+        return response()->json([
+            'message' => '2FA disabled successfully'
+        ]);
+    }
 }
