@@ -11,7 +11,7 @@ class TwoFactorController extends Controller
     public function generate2FASecret(Request $request)
     {
         $user = Auth::guard('sanctum')->user();
-        
+
         $google2fa = new Google2FA();
 
         // Generate a new secret key
@@ -19,12 +19,11 @@ class TwoFactorController extends Controller
 
         // Store the secret key in the user's record
         $user->google2fa_secret = $secretKey;
-        $user->two_factor_enabled = true;
         $user->save();
 
         // Generate the QR code URL
         $qrCodeUrl = $google2fa->getQRCodeUrl(
-            config('APP_NAME'),
+            config(env('APP_NAME')),
             $user->email,
             $secretKey
         );
@@ -37,6 +36,31 @@ class TwoFactorController extends Controller
     }
 
     public function verify2FA(Request $request)
+    {
+        $validated = $request->validate([
+            'otp' => 'required|string',
+        ]);
+
+        $user = Auth::guard('sanctum')->user();
+        $google2fa = new Google2FA();
+
+        // Verify the OTP
+        $valid = $google2fa->verifyKey($user->google2fa_secret, $validated['otp']);
+
+        if ($valid) {
+            $user->two_factor_enabled = true;
+            $user->save();
+            return response()->json([
+                'message' => '2FA verification set successfully'
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Invalid OTP'
+            ], 401);
+        }
+    }
+
+    public function validate2FA(Request $request)
     {
         $validated = $request->validate([
             'otp' => 'required|string',

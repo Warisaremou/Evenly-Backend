@@ -37,7 +37,7 @@ Route::prefix('/api')->group(function () {
     Route::prefix('users')->group(function () {
         Route::post('/register', [UserController::class, 'registerUsers']);
         Route::post('/login', [UserController::class, 'loginUsers']);
-        Route::middleware(['auth:sanctum', '2fa'])->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
             Route::get('/profile', [UserController::class, 'getProfile']);
             Route::put('/profile', [UserController::class, 'updateProfile']);
             Route::delete('/profile', [UserController::class, 'deleteProfile']);
@@ -49,6 +49,7 @@ Route::prefix('/api')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/setup', [TwoFactorController::class, 'generate2FASecret']);
             Route::post('/verify', [TwoFactorController::class, 'verify2FA']);
+            Route::post('/validate', [TwoFactorController::class, 'validate2FA']);
             Route::post('/disable', [TwoFactorController::class, 'disable2FA']);
         });
     });

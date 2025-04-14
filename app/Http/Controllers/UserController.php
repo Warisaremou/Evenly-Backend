@@ -136,12 +136,13 @@ class UserController extends Controller
                     'email' => $userData->email,
                     'role' => $userData->role->name,
                 ], 200);
-            }else{ 
+            } else {
                 return response()->json([
                     'firstname' => $userData->firstname,
                     'lastname' => $userData->lastname,
                     'email' => $userData->email,
                     'role' => $userData->role->name,
+                    'two_factor_enabled' => $userData->two_factor_enabled,
                 ], 200);
             }
         } catch (Exception $e) {
