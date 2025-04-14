@@ -41,7 +41,7 @@ class UserController extends Controller
                 $userData['lastname'] = $validated['lastname'];
             }
 
-            $user = User::create($userData);
+            User::create($userData);
 
             return response()->json([
                 'message' => 'User registered successfully',
@@ -69,12 +69,14 @@ class UserController extends Controller
             ], 401);
         }
 
-        if ($user->google2fa_secret) {
+        if ($user->two_factor_enabled) {
             return response()->json([
                 'message' => '2FA activée. Veuillez entrer votre code OTP.',
                 'requires_2fa' => true,
-                'user_id' => $user->id // utile côté frontend pour la suite
-            ]);
+                'data' => [
+                    'id' => $user->id
+                ]
+            ], 200);
         }
 
         $token = $user->createToken('auth_token');

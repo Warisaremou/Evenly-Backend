@@ -9,7 +9,7 @@ use PragmaRX\Google2FA\Google2FA;
 
 class TwoFactorController extends Controller
 {
-    public function generate2FASecret(Request $request)
+    public function generate2FASecret()
     {
         $user = Auth::guard('sanctum')->user();
 
@@ -32,7 +32,7 @@ class TwoFactorController extends Controller
         return response()->json([
             'secret' => $secretKey,
             'qr_code_url' => $qrCodeUrl,
-            'message' => '2FA setup successful'
+            'message' => '2FA setup successfully'
         ]);
     }
 
@@ -69,16 +69,24 @@ class TwoFactorController extends Controller
         ]);
 
         $user = User::findOrFail($validated['user_id']);
+
+        if (!$user || !$user->two_factor_enabled) {
+            return response()->json([
+                'message' => 'Two-factor authentication is not enabled for this user'
+            ], 401);
+        }
+
         $google2fa = new Google2FA();
 
         // Verify the OTP
         $valid = $google2fa->verifyKey($user->google2fa_secret, $validated['otp']);
 
         if ($valid) {
-            $user->two_factor_enabled = true;
-            $user->save();
+            $token = $user->createToken('auth_token');
+
             return response()->json([
-                'message' => '2FA verification set successfully'
+                'message' => 'User logged in successfully',
+                'token' => $token->plainTextToken
             ]);
         } else {
             return response()->json([
@@ -86,39 +94,7 @@ class TwoFactorController extends Controller
             ], 401);
         }
     }
-
-    public function validate2FA(Request $request)
-    {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'otp' => 'required|string',
-        ]);
-
-        $user = User::findOrFail($validated['user_id']);
-        $google2fa = new Google2FA();
-
-        // Verify the OTP
-        $valid = $google2fa->verifyKey($user->google2fa_secret, $validated['otp']);
-
-        if ($valid) {
-
-            $user->update([
-                'two_factor_enabled' => true
-            ]);
-
-            $token = $user->createToken('auth_token');
-
-            return response()->json([
-                'message' => '2FA vérifiée avec succès',
-                'token' => $token->plainTextToken
-            ]);
-        } else {
-            return response()->json([
-                'message' => 'OTP invalide'
-            ], 401);
-        }
-    }
-    public function disable2FA(Request $request)
+    public function disable2FA()
     {
         $user = Auth::guard('sanctum')->user();
 

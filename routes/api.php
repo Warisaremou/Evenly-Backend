@@ -49,15 +49,15 @@ Route::prefix('/api')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/setup', [TwoFactorController::class, 'generate2FASecret']);
             Route::post('/verify', [TwoFactorController::class, 'verify2FA']);
-            Route::post('/validate', [TwoFactorController::class, 'validate2FA']);
             Route::post('/disable', [TwoFactorController::class, 'disable2FA']);
         });
+        Route::post('/validate', [TwoFactorController::class, 'validate2FA']);
     });
 
     Route::prefix('events')->group(function () {
         Route::get('/', [EventController::class, 'getAllEvents']);
         Route::get('/{id}', [EventController::class, 'getEventsDetails']);
-        Route::middleware(['auth:sanctum', '2fa'])->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [EventController::class, 'createEvents']);
             Route::put('/{id}', [EventController::class, 'updateEvents']);
             Route::delete('/{id}', [EventController::class, 'destroyEvents']);
@@ -67,7 +67,7 @@ Route::prefix('/api')->group(function () {
 
     Route::prefix('categories')->group(function () {
         Route::get('/', [CategoryController::class, 'getAllCategories']);
-        Route::middleware(['auth:sanctum', '2fa'])->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [CategoryController::class, 'createCatergories']);
             Route::patch('/{id}', [CategoryController::class, 'updateCategories']);
             Route::delete('/{id}', [CategoryController::class, 'destroyCategories']);
@@ -84,7 +84,7 @@ Route::prefix('/api')->group(function () {
     Route::controller(TicketsController::class)->prefix('tickets')->group(function () {
         Route::get('/', 'getTickets');
         Route::get('/{id}', 'getTicketsById');
-        Route::middleware(['auth:sanctum', '2fa'])->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', 'addTickets');
             Route::get('/organizer/tickets', 'getTicketsByOrganizer');
             Route::get('/event/{id}', 'getTicketsByEvent');
@@ -95,7 +95,7 @@ Route::prefix('/api')->group(function () {
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrdersController::class, 'getOrders']);
-        Route::middleware(['auth:sanctum', '2fa'])->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [OrdersController::class, 'createOrders']);
             Route::get('/user/reservations', [OrdersController::class, 'getOrdersByUser']);
             Route::get('/events_order', [OrdersController::class, 'getOrdersOnOrganizerEvents']);
