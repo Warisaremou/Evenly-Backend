@@ -13,12 +13,12 @@ class Ensure2FAIsVerified
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next)
-    {
-        if ($request->user() && !$request->user()->two_factor_enabled) {
-            return response()->json([
-                'message' => 'Two-factor authentication is not enabled for this user.'
-            ], Response::HTTP_FORBIDDEN);
-        }
-    }
+    // public function handle(Request $request, Closure $next)
+    // {
+    //     if ($request->user() && !$request->user()->two_factor_enabled) {
+    //         return response()->json([
+    //             'message' => 'Two-factor authentication is not enabled for this user.'
+    //         ], Response::HTTP_FORBIDDEN);
+    //     }
+    // }
 }

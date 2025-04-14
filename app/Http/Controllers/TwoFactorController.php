@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PragmaRX\Google2FA\Google2FA;
@@ -39,22 +40,31 @@ class TwoFactorController extends Controller
     public function verify2FA(Request $request)
     {
         $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
             'otp' => 'required|string',
         ]);
 
-        $user = Auth::guard('sanctum')->user();
+        $user = User::findOrFail($validated['user_id']);
         $google2fa = new Google2FA();
 
         // Verify the OTP
         $valid = $google2fa->verifyKey($user->google2fa_secret, $validated['otp']);
 
         if ($valid) {
+            
+            $user->update([
+                'two_factor_enabled' => true
+            ]);
+    
+            $token = $user->createToken('auth_token');
+    
             return response()->json([
-                'message' => '2FA verification successful'
+                'message' => '2FA vérifiée avec succès',
+                'token' => $token->plainTextToken
             ]);
         } else {
             return response()->json([
-                'message' => 'Invalid OTP'
+                'message' => 'OTP invalide'
             ], 401);
         }
     }
