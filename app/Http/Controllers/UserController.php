@@ -69,6 +69,14 @@ class UserController extends Controller
             ], 401);
         }
 
+        if ($user->google2fa_secret) {
+            return response()->json([
+                'message' => '2FA activée. Veuillez entrer votre code OTP.',
+                'requires_2fa' => true,
+                'user_id' => $user->id // utile côté frontend pour la suite
+            ]);
+        }
+
         $token = $user->createToken('auth_token');
 
         return response()->json([

@@ -27,10 +27,12 @@ class TicketsController extends Controller
 
             $id = $request->user()->id;
 
+            $value = 'required|numeric';
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'quantity' => 'required|numeric',
-                'price' => 'required|numeric',
+                'quantity' => $value,
+                'price' => $value,
                 'event_id' => 'required|uuid|exists:events,id',
                 'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
             ]);
@@ -61,9 +63,11 @@ class TicketsController extends Controller
     {
         $ticket = Tickets::findOrFail($id);
 
+        $noTicket = 'Ticket not found';
+
         if (! $ticket) {
             return response()->json([
-                'message' => 'Ticket not found'
+                'message' => $noTicket
             ]);
         }
 
@@ -137,18 +141,22 @@ class TicketsController extends Controller
 
             $userID = $request->user()->id;
 
+            $value = 'required|numeric';
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'quantity' => 'required|numeric',
-                'price' => 'required|numeric',
+                'quantity' =>  $value,
+                'price' =>  $value,
                 'type_ticket_id' => 'required|uuid|exists:type_tickets,id',
             ]);
 
             $ticket = Tickets::findOrFail($id);
 
+            $noTicket = 'Ticket not found';
+
             if (!$ticket) {
                 return response()->json([
-                    'message' => 'Ticket not found'
+                    'message' => $noTicket
                 ], 404);
             }
 
@@ -190,9 +198,11 @@ class TicketsController extends Controller
 
             $ticket = Tickets::findOrFail($id);
 
+            $noTicket = 'Ticket not found';
+
             if (!$ticket) {
                 return response()->json([
-                    'message' => 'Ticket not found'
+                    'message' => $noTicket
                 ], 404);
             }
 
